@@ -3,6 +3,10 @@ const API_BASE_URL = window.location.origin; // Use same origin as the frontend
 
 // Authentication state management
 let currentUser = null;
+let currentGoodsData = []; // Store all goods data for pagination
+let currentPage = 1;
+let rowsPerPage = 7;
+let filteredData = []; // Store filtered data for pagination
 
 // Check authentication status
 async function checkAuthentication() {
@@ -90,6 +94,8 @@ window.addEventListener('load', async function() {
     if (isAuthenticated) {
         setupLogoutHandler();
         setupEventListeners();
+        await loadDashboardData(); // Load dashboard data
+        await loadGoodsInData(); // Load goods in data
         console.log('User authenticated successfully');
     }
 });
@@ -142,6 +148,9 @@ function setupEventListeners() {
     
     // Search and filter functionality
     setupSearchAndFilter();
+    
+    // Initialize pagination when data is loaded
+    setupPagination();
 }
 
 // Search and Filter Functions
@@ -173,59 +182,41 @@ function filterTable() {
     const startDate = document.getElementById('start-date')?.value || '';
     const endDate = document.getElementById('end-date')?.value || '';
     
-    const goodsInTable = document.querySelector('#goods-in tbody');
-    if (!goodsInTable) return;
-    
-    const rows = goodsInTable.querySelectorAll('tr');
-    let visibleCount = 0;
-    
-    rows.forEach(row => {
-        const cells = row.querySelectorAll('td');
-        if (cells.length === 0) return;
-        
-        // Get row data
-        const date = cells[0]?.textContent.trim() || '';
-        const name = cells[1]?.textContent.toLowerCase() || '';
-        const weight = cells[2]?.textContent.toLowerCase() || '';
-        const price = cells[3]?.textContent.toLowerCase() || '';
-        const amount = cells[4]?.textContent.toLowerCase() || '';
-        const account = cells[5]?.textContent.toLowerCase() || '';
-        const status = cells[6]?.textContent.toLowerCase() || '';
-        
+    // Filter the data instead of hiding/showing rows
+    filteredData = currentGoodsData.filter(item => {
         // Search filter
         const matchesSearch = !searchTerm || 
-            name.includes(searchTerm) ||
-            account.includes(searchTerm) ||
-            status.includes(searchTerm) ||
-            weight.includes(searchTerm) ||
-            price.includes(searchTerm) ||
-            amount.includes(searchTerm);
+            item.name.toLowerCase().includes(searchTerm) ||
+            item.acct_no.toLowerCase().includes(searchTerm) ||
+            item.bank.toLowerCase().includes(searchTerm) ||
+            item.status.toLowerCase().includes(searchTerm) ||
+            item.weight.toString().includes(searchTerm) ||
+            item.price_per_kg.toString().includes(searchTerm) ||
+            item.amount.toString().includes(searchTerm);
         
         // Date filter
         let matchesDate = true;
         if (startDate || endDate) {
-            const rowDate = convertDateFormat(date);
-            if (rowDate) {
-                if (startDate && rowDate < startDate) {
+            const itemDate = formatDateForComparison(item.created_at);
+            if (itemDate) {
+                if (startDate && itemDate < startDate) {
                     matchesDate = false;
                 }
-                if (endDate && rowDate > endDate) {
+                if (endDate && itemDate > endDate) {
                     matchesDate = false;
                 }
             }
         }
         
-        // Show/hide row
-        if (matchesSearch && matchesDate) {
-            row.style.display = '';
-            visibleCount++;
-        } else {
-            row.style.display = 'none';
-        }
+        return matchesSearch && matchesDate;
     });
     
-    // Update table message if no results
-    updateTableMessage(visibleCount, goodsInTable);
+    // Reset to first page when filtering
+    currentPage = 1;
+    
+    // Re-render table and pagination
+    renderTablePage();
+    updatePaginationControls();
 }
 
 function convertDateFormat(dateStr) {
@@ -240,25 +231,91 @@ function convertDateFormat(dateStr) {
     return null;
 }
 
-function updateTableMessage(visibleCount, tableBody) {
-    // Remove existing message
-    const existingMessage = tableBody.querySelector('.no-results-message');
-    if (existingMessage) {
-        existingMessage.remove();
+// Format ISO date for comparison with date inputs
+function formatDateForComparison(isoDateString) {
+    if (!isoDateString) return null;
+    
+    const date = new Date(isoDateString);
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, '0');
+    
+    return `${year}-${month}-${day}`;
+}
+
+// Pagination Functions
+function updatePaginationControls() {
+    const totalPages = Math.ceil(filteredData.length / rowsPerPage);
+    const paginationContainer = document.querySelector('#goods-in .pagination');
+    
+    if (!paginationContainer) return;
+    
+    // Clear existing pagination
+    paginationContainer.innerHTML = '';
+    
+    // Previous button
+    const prevBtn = document.createElement('button');
+    prevBtn.className = 'pagination-btn';
+    prevBtn.innerHTML = '<i class="fas fa-chevron-left"></i>';
+    prevBtn.disabled = currentPage === 1;
+    prevBtn.addEventListener('click', () => {
+        if (currentPage > 1) {
+            currentPage--;
+            renderTablePage();
+            updatePaginationControls();
+        }
+    });
+    paginationContainer.appendChild(prevBtn);
+    
+    // Page numbers
+    const maxVisiblePages = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+    
+    // Adjust start page if we're near the end
+    if (endPage - startPage < maxVisiblePages - 1) {
+        startPage = Math.max(1, endPage - maxVisiblePages + 1);
     }
     
-    // Add message if no results
-    if (visibleCount === 0) {
-        const messageRow = document.createElement('tr');
-        messageRow.className = 'no-results-message';
-        messageRow.innerHTML = `
-            <td colspan="8" style="text-align: center; padding: 40px; color: #666;">
-                <i class="fas fa-search" style="font-size: 24px; margin-bottom: 10px; display: block;"></i>
-                No goods found matching your search criteria.
-            </td>
-        `;
-        tableBody.appendChild(messageRow);
+    for (let i = startPage; i <= endPage; i++) {
+        const pageBtn = document.createElement('button');
+        pageBtn.className = `pagination-btn ${i === currentPage ? 'active' : ''}`;
+        pageBtn.textContent = i;
+        pageBtn.addEventListener('click', () => {
+            currentPage = i;
+            renderTablePage();
+            updatePaginationControls();
+        });
+        paginationContainer.appendChild(pageBtn);
     }
+    
+    // Next button
+    const nextBtn = document.createElement('button');
+    nextBtn.className = 'pagination-btn';
+    nextBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
+    nextBtn.disabled = currentPage === totalPages || totalPages === 0;
+    nextBtn.addEventListener('click', () => {
+        if (currentPage < totalPages) {
+            currentPage++;
+            renderTablePage();
+            updatePaginationControls();
+        }
+    });
+    paginationContainer.appendChild(nextBtn);
+    
+    // Add page info
+    const pageInfo = document.createElement('div');
+    pageInfo.className = 'page-info';
+    pageInfo.style.marginTop = '10px';
+    pageInfo.style.textAlign = 'center';
+    pageInfo.style.fontSize = '14px';
+    pageInfo.style.color = '#666';
+    
+    const startRecord = totalPages === 0 ? 0 : ((currentPage - 1) * rowsPerPage) + 1;
+    const endRecord = Math.min(currentPage * rowsPerPage, filteredData.length);
+    
+    pageInfo.textContent = `Showing ${startRecord}-${endRecord} of ${filteredData.length} records`;
+    paginationContainer.appendChild(pageInfo);
 }
 
 function clearAllFilters() {
@@ -279,22 +336,13 @@ function clearAllFilters() {
         endDateInput.value = '';
     }
     
-    // Show all rows
-    const goodsInTable = document.querySelector('#goods-in tbody');
-    if (goodsInTable) {
-        const rows = goodsInTable.querySelectorAll('tr');
-        rows.forEach(row => {
-            if (!row.classList.contains('no-results-message')) {
-                row.style.display = '';
-            }
-        });
-        
-        // Remove no results message
-        const messageRow = goodsInTable.querySelector('.no-results-message');
-        if (messageRow) {
-            messageRow.remove();
-        }
-    }
+    // Reset filtered data to all data
+    filteredData = currentGoodsData;
+    currentPage = 1;
+    
+    // Re-render table and pagination
+    renderTablePage();
+    updatePaginationControls();
 }
 
 // Tab Navigation
@@ -321,10 +369,11 @@ document.querySelectorAll('.date-btn').forEach(button => {
     });
 });
 
-// View Receipt Function
-function viewReceipt(date, itemName) {
+// View Receipt Function (will be updated by the new implementation below)
+function viewReceipt(date, itemName, id = null) {
     alert(`Viewing receipt for:
-Date: ${date}
+${id ? `ID: ${id}
+` : ''}Date: ${date}
 Item: ${itemName}
 
 Receipt functionality will be implemented here.`);
@@ -343,7 +392,7 @@ function closeGoodsInModal() {
 }
 
 // Submit Goods In Form
-function submitGoodsIn(event) {
+async function submitGoodsIn(event) {
     event.preventDefault();
     
     const formData = new FormData(event.target);
@@ -369,20 +418,38 @@ function submitGoodsIn(event) {
     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
     submitBtn.disabled = true;
     
-    // Simulate API call (replace with actual API call)
-    setTimeout(() => {
-        console.log('Goods In Data:', goodsData);
-        alert('Goods In record saved successfully!');
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/goods-in`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include',
+            body: JSON.stringify(goodsData)
+        });
         
-        // Reset form and close modal
-        closeGoodsInModal();
+        const result = await response.json();
         
+        if (response.ok && result.success) {
+            alert('Goods In record saved successfully!');
+            
+            // Reset form and close modal
+            closeGoodsInModal();
+            
+            // Reload data to show new record
+            await loadGoodsInData();
+            await loadDashboardData();
+        } else {
+            alert(result.message || 'Failed to save goods record.');
+        }
+    } catch (error) {
+        console.error('Error submitting goods data:', error);
+        alert('An error occurred while saving the record.');
+    } finally {
         // Restore button state
         submitBtn.innerHTML = originalText;
         submitBtn.disabled = false;
-        
-        // TODO: Add the new record to the table or refresh the data
-    }, 1000);
+    }
 }
 
 // Close modal when clicking outside
@@ -392,3 +459,254 @@ window.addEventListener('click', function(event) {
         closeGoodsInModal();
     }
 });
+
+// Data Loading Functions
+
+// Load dashboard summary data
+async function loadDashboardData() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/dashboard-summary`, {
+            method: 'GET',
+            credentials: 'include'
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            if (result.success) {
+                updateDashboardMetrics(result.data);
+            }
+        } else {
+            console.error('Failed to load dashboard data');
+        }
+    } catch (error) {
+        console.error('Error loading dashboard data:', error);
+    }
+}
+
+// Update dashboard metrics with real data
+function updateDashboardMetrics(data) {
+    // Update Total Weight In
+    const weightElement = document.querySelector('.metric-card:nth-child(1) .metric-value');
+    if (weightElement) {
+        weightElement.textContent = `${data.totalWeight.toLocaleString()} kg`;
+    }
+    
+    // Update Amount Paid
+    const paidElement = document.querySelector('.metric-card:nth-child(2) .metric-value');
+    if (paidElement) {
+        paidElement.textContent = `₦${data.amountPaid.toLocaleString()}`;
+    }
+    
+    // Update Amount Due
+    const dueElement = document.querySelector('.metric-card:nth-child(3) .metric-value');
+    if (dueElement) {
+        dueElement.textContent = `₦${data.amountDue.toLocaleString()}`;
+    }
+    
+    // Update Debt
+    const debtElement = document.querySelector('.metric-card:nth-child(4) .metric-value');
+    if (debtElement) {
+        debtElement.textContent = `₦${data.debt.toLocaleString()}`;
+    }
+}
+
+// Load goods in data
+async function loadGoodsInData() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/goods-in`, {
+            method: 'GET',
+            credentials: 'include'
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            if (result.success) {
+                updateGoodsInTable(result.data);
+                updateRecentActivitiesTable(result.data);
+            }
+        } else {
+            console.error('Failed to load goods in data');
+        }
+    } catch (error) {
+        console.error('Error loading goods in data:', error);
+    }
+}
+
+// Update goods in table with real data
+function updateGoodsInTable(data) {
+    const tbody = document.querySelector('#goods-in tbody');
+    if (!tbody) return;
+    
+    // Store data globally for pagination
+    currentGoodsData = data;
+    filteredData = data; // Initially, filtered data is same as all data
+    currentPage = 1; // Reset to first page
+    
+    renderTablePage();
+    updatePaginationControls();
+}
+
+// Render current page of table data
+function renderTablePage() {
+    const tbody = document.querySelector('#goods-in tbody');
+    if (!tbody) return;
+    
+    // Clear existing rows
+    tbody.innerHTML = '';
+    
+    if (filteredData.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="9" style="text-align: center; padding: 40px; color: #666;">
+                    <i class="fas fa-box-open" style="font-size: 24px; margin-bottom: 10px; display: block;"></i>
+                    No goods in records found.
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    // Calculate pagination
+    const startIndex = (currentPage - 1) * rowsPerPage;
+    const endIndex = startIndex + rowsPerPage;
+    const pageData = filteredData.slice(startIndex, endIndex);
+    
+    // Sort data by created_at (newest first)
+    const sortedPageData = pageData.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    
+    sortedPageData.forEach(item => {
+        const row = document.createElement('tr');
+        const formattedDate = formatDate(item.created_at);
+        const statusClass = item.status === 'completed' ? 'completed' : 'pending';
+        
+        row.innerHTML = `
+            <td>${formattedDate}</td>
+            <td>${item.name}</td>
+            <td>${item.weight.toLocaleString()}</td>
+            <td>₦${item.price_per_kg.toFixed(2)}</td>
+            <td>₦${item.amount.toLocaleString()}</td>
+            <td>${item.acct_no}</td>
+            <td>${item.bank}</td>
+            <td><span class="status ${statusClass}">${item.status.charAt(0).toUpperCase() + item.status.slice(1)}</span></td>
+            <td>
+                <button class="view-btn" data-id="${item.in_id}" data-date="${formattedDate}" data-item="${item.name}" title="View Receipt">
+                    <i class="fas fa-eye"></i>
+                    <span>View</span>
+                </button>
+            </td>
+        `;
+        
+        tbody.appendChild(row);
+    });
+    
+    // Re-attach event listeners for view buttons
+    const viewButtons = tbody.querySelectorAll('.view-btn');
+    viewButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const date = this.getAttribute('data-date');
+            const item = this.getAttribute('data-item');
+            const id = this.getAttribute('data-id');
+            viewReceipt(date, item, id);
+        });
+    });
+}
+
+// Update recent activities table with real data (showing latest 6 records)
+function updateRecentActivitiesTable(data) {
+    const tbody = document.querySelector('#dashboard .table-container tbody');
+    if (!tbody) return;
+    
+    // Clear existing rows
+    tbody.innerHTML = '';
+    
+    if (data.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="5" style="text-align: center; padding: 40px; color: #666;">
+                    No recent activities found.
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    // Sort data by created_at (newest first) and take only first 6
+    const recentData = data
+        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+        .slice(0, 6);
+    
+    recentData.forEach(item => {
+        const row = document.createElement('tr');
+        const formattedDate = formatDate(item.created_at);
+        const statusClass = item.status === 'completed' ? 'completed' : 'pending';
+        
+        row.innerHTML = `
+            <td>${formattedDate}</td>
+            <td><span style="color: green;">In</span></td>
+            <td>${item.weight.toLocaleString()}</td>
+            <td>₦${item.amount.toLocaleString()}</td>
+            <td><span class="status ${statusClass}">${item.status.charAt(0).toUpperCase() + item.status.slice(1)}</span></td>
+        `;
+        
+        tbody.appendChild(row);
+    });
+}
+
+// Update recent activities table with real data (showing latest 6 records)
+function updateRecentActivitiesTable(data) {
+    const tbody = document.querySelector('#dashboard .table-container tbody');
+    if (!tbody) return;
+    
+    // Clear existing rows
+    tbody.innerHTML = '';
+    
+    if (data.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="5" style="text-align: center; padding: 40px; color: #666;">
+                    No recent activities found.
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    // Sort data by created_at (newest first) and take only first 6
+    const recentData = data
+        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+        .slice(0, 6);
+    
+    recentData.forEach(item => {
+        const row = document.createElement('tr');
+        const formattedDate = formatDate(item.created_at);
+        const statusClass = item.status === 'completed' ? 'completed' : 'pending';
+        
+        row.innerHTML = `
+            <td>${formattedDate}</td>
+            <td><span style="color: green;">In</span></td>
+            <td>${item.weight.toLocaleString()}</td>
+            <td>₦${item.amount.toLocaleString()}</td>
+            <td><span class="status ${statusClass}">${item.status.charAt(0).toUpperCase() + item.status.slice(1)}</span></td>
+        `;
+        
+        tbody.appendChild(row);
+    });
+}
+
+// Format date from ISO string to DD/MM/YYYY
+function formatDate(isoDateString) {
+    if (!isoDateString) return '';
+    
+    const date = new Date(isoDateString);
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    
+    return `${day}/${month}/${year}`;
+}
+
+// Setup pagination functionality
+function setupPagination() {
+    // Pagination functionality is handled by updatePaginationControls()
+    // This function is called when data is loaded
+}

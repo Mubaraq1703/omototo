@@ -8,6 +8,7 @@ const cookieParser = require('cookie-parser');
 const { google } = require('googleapis');
 const registerRoutes = require('./register');
 const authRoutes = require('./auth'); // Import new auth routes
+const goodsRoutes = require('./goods'); // Import goods routes
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -107,6 +108,7 @@ app.get('/api/health', (req, res) => {
 // API Routes
 app.use('/api/auth', registerRoutes);
 app.use('/api/auth', authRoutes); // Use new auth routes
+app.use('/api', goodsRoutes); // Use goods routes
 
 // Error handling middleware
 app.use((err, req, res, next) => {
