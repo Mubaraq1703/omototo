@@ -302,6 +302,112 @@ header {
     font-size: 20px;
 }
 
+/* Table Controls */
+.table-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    align-items: center;
+    margin-bottom: 20px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+}
+
+/* Search Container */
+.search-container {
+    position: relative;
+    flex: 1;
+    min-width: 250px;
+}
+
+.search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #666;
+    font-size: 14px;
+    z-index: 1;
+}
+
+.search-input {
+    width: 100%;
+    padding: 10px 12px 10px 35px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 14px;
+    transition: border-color 0.2s;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(43, 103, 119, 0.1);
+}
+
+/* Date Filter Container */
+.date-filter-container {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.date-input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.date-input-group label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-dark);
+}
+
+.date-input {
+    padding: 8px 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 14px;
+    min-width: 140px;
+}
+
+.date-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(43, 103, 119, 0.1);
+}
+
+.clear-btn {
+    padding: 8px 12px;
+    font-size: 12px;
+    margin-top: 15px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .table-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .search-container {
+        min-width: 100%;
+    }
+    
+    .date-filter-container {
+        justify-content: space-between;
+    }
+    
+    .clear-btn {
+        margin-top: 10px;
+        align-self: flex-start;
+    }
+}
+
 /* Table Styles */
 .table-container {
     overflow-x: auto;
@@ -565,8 +671,28 @@ td:last-child {
     margin-bottom: 20px;
 }
 
-.modal .form-group {
-    margin-bottom: 0;
+.modal .form-group input,
+.modal .form-group select {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 16px;
+}
+
+/* Enhanced styling for datalist input */
+.modal .form-group input[list] {
+    background-image: url('data:image/svg+xml;charset=US-ASCII,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 4 5"><path fill="%23666" d="M2 0L0 2h4zm0 5L0 3h4z"/></svg>');
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 12px;
+    padding-right: 35px;
+}
+
+.modal .form-group input[list]:focus {
+    border-color: var(--primary);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(43, 103, 119, 0.1);
 }
 
 .modal .form-actions {

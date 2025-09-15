@@ -139,6 +139,162 @@ function setupEventListeners() {
             viewReceipt(date, item);
         });
     });
+    
+    // Search and filter functionality
+    setupSearchAndFilter();
+}
+
+// Search and Filter Functions
+function setupSearchAndFilter() {
+    const searchInput = document.getElementById('goods-search');
+    const startDateInput = document.getElementById('start-date');
+    const endDateInput = document.getElementById('end-date');
+    const clearFiltersBtn = document.getElementById('clear-filters');
+    
+    if (searchInput) {
+        searchInput.addEventListener('input', filterTable);
+    }
+    
+    if (startDateInput) {
+        startDateInput.addEventListener('change', filterTable);
+    }
+    
+    if (endDateInput) {
+        endDateInput.addEventListener('change', filterTable);
+    }
+    
+    if (clearFiltersBtn) {
+        clearFiltersBtn.addEventListener('click', clearAllFilters);
+    }
+}
+
+function filterTable() {
+    const searchTerm = document.getElementById('goods-search')?.value.toLowerCase() || '';
+    const startDate = document.getElementById('start-date')?.value || '';
+    const endDate = document.getElementById('end-date')?.value || '';
+    
+    const goodsInTable = document.querySelector('#goods-in tbody');
+    if (!goodsInTable) return;
+    
+    const rows = goodsInTable.querySelectorAll('tr');
+    let visibleCount = 0;
+    
+    rows.forEach(row => {
+        const cells = row.querySelectorAll('td');
+        if (cells.length === 0) return;
+        
+        // Get row data
+        const date = cells[0]?.textContent.trim() || '';
+        const name = cells[1]?.textContent.toLowerCase() || '';
+        const weight = cells[2]?.textContent.toLowerCase() || '';
+        const price = cells[3]?.textContent.toLowerCase() || '';
+        const amount = cells[4]?.textContent.toLowerCase() || '';
+        const account = cells[5]?.textContent.toLowerCase() || '';
+        const status = cells[6]?.textContent.toLowerCase() || '';
+        
+        // Search filter
+        const matchesSearch = !searchTerm || 
+            name.includes(searchTerm) ||
+            account.includes(searchTerm) ||
+            status.includes(searchTerm) ||
+            weight.includes(searchTerm) ||
+            price.includes(searchTerm) ||
+            amount.includes(searchTerm);
+        
+        // Date filter
+        let matchesDate = true;
+        if (startDate || endDate) {
+            const rowDate = convertDateFormat(date);
+            if (rowDate) {
+                if (startDate && rowDate < startDate) {
+                    matchesDate = false;
+                }
+                if (endDate && rowDate > endDate) {
+                    matchesDate = false;
+                }
+            }
+        }
+        
+        // Show/hide row
+        if (matchesSearch && matchesDate) {
+            row.style.display = '';
+            visibleCount++;
+        } else {
+            row.style.display = 'none';
+        }
+    });
+    
+    // Update table message if no results
+    updateTableMessage(visibleCount, goodsInTable);
+}
+
+function convertDateFormat(dateStr) {
+    // Convert "DD/MM/YYYY" to "YYYY-MM-DD" for comparison
+    const parts = dateStr.split('/');
+    if (parts.length === 3) {
+        const day = parts[0].padStart(2, '0');
+        const month = parts[1].padStart(2, '0');
+        const year = parts[2];
+        return `${year}-${month}-${day}`;
+    }
+    return null;
+}
+
+function updateTableMessage(visibleCount, tableBody) {
+    // Remove existing message
+    const existingMessage = tableBody.querySelector('.no-results-message');
+    if (existingMessage) {
+        existingMessage.remove();
+    }
+    
+    // Add message if no results
+    if (visibleCount === 0) {
+        const messageRow = document.createElement('tr');
+        messageRow.className = 'no-results-message';
+        messageRow.innerHTML = `
+            <td colspan="8" style="text-align: center; padding: 40px; color: #666;">
+                <i class="fas fa-search" style="font-size: 24px; margin-bottom: 10px; display: block;"></i>
+                No goods found matching your search criteria.
+            </td>
+        `;
+        tableBody.appendChild(messageRow);
+    }
+}
+
+function clearAllFilters() {
+    // Clear search input
+    const searchInput = document.getElementById('goods-search');
+    if (searchInput) {
+        searchInput.value = '';
+    }
+    
+    // Clear date inputs
+    const startDateInput = document.getElementById('start-date');
+    if (startDateInput) {
+        startDateInput.value = '';
+    }
+    
+    const endDateInput = document.getElementById('end-date');
+    if (endDateInput) {
+        endDateInput.value = '';
+    }
+    
+    // Show all rows
+    const goodsInTable = document.querySelector('#goods-in tbody');
+    if (goodsInTable) {
+        const rows = goodsInTable.querySelectorAll('tr');
+        rows.forEach(row => {
+            if (!row.classList.contains('no-results-message')) {
+                row.style.display = '';
+            }
+        });
+        
+        // Remove no results message
+        const messageRow = goodsInTable.querySelector('.no-results-message');
+        if (messageRow) {
+            messageRow.remove();
+        }
+    }
 }
 
 // Tab Navigation

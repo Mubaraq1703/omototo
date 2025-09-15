@@ -67,21 +67,21 @@
                         <div class="metric-icon">
                             <i class="fas fa-money-bill-wave"></i>
                         </div>
-                        <div class="metric-value">$86,540</div>
+                        <div class="metric-value">₦86,540</div>
                         <div class="metric-label">Amount Paid</div>
                     </div>
                     <div class="metric-card">
                         <div class="metric-icon">
                             <i class="fas fa-hand-holding-usd"></i>
                         </div>
-                        <div class="metric-value">$12,350</div>
+                        <div class="metric-value">₦12,350</div>
                         <div class="metric-label">Amount Due</div>
                     </div>
                     <div class="metric-card">
                         <div class="metric-icon">
                             <i class="fas fa-file-invoice-dollar"></i>
                         </div>
-                        <div class="metric-value">$5,670</div>
+                        <div class="metric-value">₦5,670</div>
                         <div class="metric-label">Debt</div>
                     </div>
                 </div>
@@ -137,42 +137,42 @@
                                     <td>12/05/2023</td>
                                     <td><span style="color: green;">In</span></td>
                                     <td>1,250</td>
-                                    <td>$8,750</td>
+                                    <td>₦8,750</td>
                                     <td><span class="status completed">Completed</span></td>
                                 </tr>
                                 <tr>
                                     <td>11/05/2023</td>
                                     <td><span style="color: red;">Out</span></td>
                                     <td>850</td>
-                                    <td>$5,950</td>
+                                    <td>₦5,950</td>
                                     <td><span class="status completed">Completed</span></td>
                                 </tr>
                                 <tr>
                                     <td>10/05/2023</td>
                                     <td><span style="color: green;">In</span></td>
                                     <td>2,500</td>
-                                    <td>$15,000</td>
+                                    <td>₦15,000</td>
                                     <td><span class="status pending">Pending</span></td>
                                 </tr>
                                 <tr>
                                     <td>09/05/2023</td>
                                     <td><span style="color: red;">Out</span></td>
                                     <td>650</td>
-                                    <td>$5,200</td>
+                                    <td>₦5,200</td>
                                     <td><span class="status completed">Completed</span></td>
                                 </tr>
                                 <tr>
                                     <td>08/05/2023</td>
                                     <td><span style="color: green;">In</span></td>
                                     <td>1,800</td>
-                                    <td>$12,600</td>
+                                    <td>₦12,600</td>
                                     <td><span class="status completed">Completed</span></td>
                                 </tr>
                                 <tr>
                                     <td>07/05/2023</td>
                                     <td><span style="color: red;">Out</span></td>
                                     <td>1,200</td>
-                                    <td>$8,400</td>
+                                    <td>₦8,400</td>
                                     <td><span class="status completed">Completed</span></td>
                                 </tr>
                             </tbody>
@@ -191,6 +191,27 @@
                     <button class="btn btn-primary add-goods-btn" style="margin-bottom: 20px;">
                         <i class="fas fa-plus-circle"></i> Add Goods In
                     </button>
+
+                    <!-- Search and Filter Controls -->
+                    <div class="table-controls">
+                        <div class="search-container">
+                            <i class="fas fa-search search-icon"></i>
+                            <input type="text" id="goods-search" placeholder="Search by name, account, or status..." class="search-input">
+                        </div>
+                        <div class="date-filter-container">
+                            <div class="date-input-group">
+                                <label for="start-date">From:</label>
+                                <input type="date" id="start-date" class="date-input">
+                            </div>
+                            <div class="date-input-group">
+                                <label for="end-date">To:</label>
+                                <input type="date" id="end-date" class="date-input">
+                            </div>
+                            <button type="button" id="clear-filters" class="btn btn-secondary clear-btn">
+                                <i class="fas fa-times"></i> Clear
+                            </button>
+                        </div>
+                    </div>
 
                     <div class="table-container">
                         <table>
@@ -211,9 +232,9 @@
                                     <td>12/05/2023</td>
                                     <td>Rice Grains</td>
                                     <td>1,250</td>
-                                    <td>$7.00</td>
-                                    <td>$8,750</td>
-                                    <td>****4589</td>
+                                    <td>₦7.00</td>
+                                    <td>₦8,750</td>
+                                    <td>2108374589</td>
                                     <td><span class="status completed">Completed</span></td>
                                     <td>
                                         <button class="view-btn" data-date="12/05/2023" data-item="Rice Grains" title="View Receipt">
@@ -226,9 +247,9 @@
                                     <td>10/05/2023</td>
                                     <td>Wheat</td>
                                     <td>2,500</td>
-                                    <td>$6.00</td>
-                                    <td>$15,000</td>
-                                    <td>****3267</td>
+                                    <td>₦6.00</td>
+                                    <td>₦15,000</td>
+                                    <td>1205673267</td>
                                     <td><span class="status pending">Pending</span></td>
                                     <td>
                                         <button class="view-btn" data-date="10/05/2023" data-item="Wheat" title="View Receipt">
@@ -241,9 +262,9 @@
                                     <td>08/05/2023</td>
                                     <td>Corn</td>
                                     <td>1,800</td>
-                                    <td>$7.00</td>
-                                    <td>$12,600</td>
-                                    <td>****4589</td>
+                                    <td>₦7.00</td>
+                                    <td>₦12,600</td>
+                                    <td>2108374589</td>
                                     <td><span class="status completed">Completed</span></td>
                                     <td>
                                         <button class="view-btn" data-date="08/05/2023" data-item="Corn" title="View Receipt">
@@ -256,9 +277,9 @@
                                     <td>05/05/2023</td>
                                     <td>Soybeans</td>
                                     <td>1,500</td>
-                                    <td>$5.50</td>
-                                    <td>$8,250</td>
-                                    <td>****7845</td>
+                                    <td>₦5.50</td>
+                                    <td>₦8,250</td>
+                                    <td>9876547845</td>
                                     <td><span class="status completed">Completed</span></td>
                                     <td>
                                         <button class="view-btn" data-date="05/05/2023" data-item="Soybeans" title="View Receipt">
@@ -271,9 +292,9 @@
                                     <td>03/05/2023</td>
                                     <td>Barley</td>
                                     <td>800</td>
-                                    <td>$8.00</td>
-                                    <td>$6,400</td>
-                                    <td>****9921</td>
+                                    <td>₦8.00</td>
+                                    <td>₦6,400</td>
+                                    <td>5432109921</td>
                                     <td><span class="status completed">Completed</span></td>
                                     <td>
                                         <button class="view-btn" data-date="03/05/2023" data-item="Barley" title="View Receipt">
@@ -329,8 +350,8 @@
                                     <td>850</td>
                                     <td>TRK-7845</td>
                                     <td>DRV-4521</td>
-                                    <td>$7.00</td>
-                                    <td>$5,950</td>
+                                    <td>₦7.00</td>
+                                    <td>₦5,950</td>
                                     <td><span class="status completed">Completed</span></td>
                                     <td>
                                         <i class="fas fa-eye" style="color: var(--primary); cursor: pointer;" title="View Receipt"></i>
@@ -342,8 +363,8 @@
                                     <td>650</td>
                                     <td>TRK-2367</td>
                                     <td>DRV-7854</td>
-                                    <td>$8.00</td>
-                                    <td>$5,200</td>
+                                    <td>₦8.00</td>
+                                    <td>₦5,200</td>
                                     <td><span class="status completed">Completed</span></td>
                                     <td>
                                         <i class="fas fa-eye" style="color: var(--primary); cursor: pointer;" title="View Receipt"></i>
@@ -355,8 +376,8 @@
                                     <td>1,200</td>
                                     <td>TRK-7845</td>
                                     <td>DRV-4521</td>
-                                    <td>$7.00</td>
-                                    <td>$8,400</td>
+                                    <td>₦7.00</td>
+                                    <td>₦8,400</td>
                                     <td><span class="status completed">Completed</span></td>
                                     <td>
                                         <i class="fas fa-eye" style="color: var(--primary); cursor: pointer;" title="View Receipt"></i>
@@ -368,8 +389,8 @@
                                     <td>1,500</td>
                                     <td>TRK-5698</td>
                                     <td>DRV-3214</td>
-                                    <td>$6.50</td>
-                                    <td>$9,750</td>
+                                    <td>₦6.50</td>
+                                    <td>₦9,750</td>
                                     <td><span class="status completed">Completed</span></td>
                                     <td>
                                         <i class="fas fa-eye" style="color: var(--primary); cursor: pointer;" title="View Receipt"></i>
@@ -381,8 +402,8 @@
                                     <td>950</td>
                                     <td>TRK-1254</td>
                                     <td>DRV-6589</td>
-                                    <td>$7.50</td>
-                                    <td>$7,125</td>
+                                    <td>₦7.50</td>
+                                    <td>₦7,125</td>
                                     <td><span class="status completed">Completed</span></td>
                                     <td>
                                         <i class="fas fa-eye" style="color: var(--primary); cursor: pointer;" title="View Receipt"></i>
@@ -488,7 +509,61 @@
                     </div>
                     <div class="form-group">
                         <label for="bank-name">Bank *</label>
-                        <input type="text" id="bank-name" name="bank" required placeholder="Enter bank name">
+                        <input type="text" id="bank-name" name="bank" required placeholder="Select or type bank name" list="nigerian-banks">
+                        <datalist id="nigerian-banks">
+                            <option value="Access Bank">
+                            <option value="Citibank Nigeria">
+                            <option value="Ecobank Nigeria">
+                            <option value="Fidelity Bank">
+                            <option value="First Bank of Nigeria">
+                            <option value="First City Monument Bank (FCMB)">
+                            <option value="Guaranty Trust Bank (GTBank)">
+                            <option value="Heritage Bank">
+                            <option value="Keystone Bank">
+                            <option value="Polaris Bank">
+                            <option value="Providus Bank">
+                            <option value="Stanbic IBTC Bank">
+                            <option value="Standard Chartered Bank">
+                            <option value="Sterling Bank">
+                            <option value="SunTrust Bank">
+                            <option value="Union Bank of Nigeria">
+                            <option value="United Bank for Africa (UBA)">
+                            <option value="Unity Bank">
+                            <option value="Wema Bank">
+                            <option value="Zenith Bank">
+                            <option value="Jaiz Bank">
+                            <option value="Lotus Bank">
+                            <option value="TAJ Bank">
+                            <option value="Globus Bank">
+                            <option value="PremiumTrust Bank">
+                            <option value="Coronation Bank">
+                            <option value="Rand Merchant Bank">
+                            <option value="Citi Bank">
+                            <option value="TITAN Trust Bank">
+                            <option value="Parallex Bank">
+                            <option value="VFD Microfinance Bank">
+                            <option value="Moniepoint Microfinance Bank">
+                            <option value="Kuda Microfinance Bank">
+                            <option value="Carbon Microfinance Bank">
+                            <option value="Mint Finex MFB">
+                            <option value="Sparkle Microfinance Bank">
+                            <option value="NPF Microfinance Bank">
+                            <option value="LAPO Microfinance Bank">
+                            <option value="AB Microfinance Bank">
+                            <option value="Accion Microfinance Bank">
+                            <option value="CEMCS Microfinance Bank">
+                            <option value="Eyowo Microfinance Bank">
+                            <option value="9PSB (9 Payment Service Bank)">
+                            <option value="Opay Digital Services">
+                            <option value="PalmPay">
+                            <option value="FairMoney Microfinance Bank">
+                            <option value="Renmoney Microfinance Bank">
+                            <option value="Rubies Microfinance Bank">
+                            <option value="Page Microfinance Bank">
+                            <option value="GoMoney">
+                            <option value="Mayfair MFB">
+                            <option value="Bainescredit MFB">
+                        </datalist>
                     </div>
                     <div class="form-group">
                         <label for="phone-no">Phone Number *</label>
