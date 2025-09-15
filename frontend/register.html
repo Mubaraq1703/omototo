@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - Warehouse Management System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #2b6777;
+            --secondary: #52ab98;
+            --background: #f2f2f2;
+            --card-bg: #ffffff;
+            --accent: #c8d8e4;
+            --text-dark: #333;
+            --text-light: #666;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--background);
+            color: var(--text-dark);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .register-container {
+            background-color: var(--card-bg);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 800px;
+            overflow: hidden;
+        }
+
+        .register-header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .register-header .logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .register-header .logo i {
+            font-size: 32px;
+        }
+
+        .register-header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .register-header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .register-form {
+            padding: 40px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        @media (min-width: 768px) {
+            .form-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .form-group {
+            margin-bottom: 0;
+        }
+
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--text-dark);
+            font-size: 14px;
+        }
+
+        .form-group label .required {
+            color: #e74c3c;
+            font-weight: normal;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 15px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background-color: #fafafa;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--primary);
+            background-color: white;
+            box-shadow: 0 0 0 3px rgba(43, 103, 119, 0.1);
+        }
+
+        .form-group input.error,
+        .form-group select.error {
+            border-color: #e74c3c;
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--text-light);
+            cursor: pointer;
+            font-size: 16px;
+            transition: color 0.3s ease;
+        }
+
+        .password-toggle:hover {
+            color: var(--primary);
+        }
+
+        .form-actions {
+            margin-top: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(43, 103, 119, 0.3);
+        }
+
+        .btn-secondary {
+            background-color: transparent;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .login-link {
+            text-align: center;
+            margin-top: 20px;
+            color: var(--text-light);
+            font-size: 14px;
+        }
+
+        .login-link a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .login-link a:hover {
+            text-decoration: underline;
+        }
+
+        .error-message {
+            color: #e74c3c;
+            font-size: 12px;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .success-message {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #c3e6cb;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="register-container">
+        <div class="register-header">
+            <div class="logo">
+                <i class="fas fa-warehouse"></i>
+                <h1>Warehouse Manager</h1>
+            </div>
+            <p>Create your account to get started</p>
+        </div>
+
+        <div class="register-form">
+            <div class="success-message" id="successMessage">
+                <i class="fas fa-check-circle"></i>
+                Registration successful! You can now log in with your credentials.
+            </div>
+
+            <form id="registerForm">
+                <div class="form-grid">
+
+
+                    <div class="form-group">
+                        <label for="username">Username <span class="required">*</span></label>
+                        <input type="text" id="username" name="username" required>
+                        <div class="error-message" id="usernameError">Username is required</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="firstName">First Name <span class="required">*</span></label>
+                        <input type="text" id="firstName" name="first_name" required>
+                        <div class="error-message" id="firstNameError">First name is required</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="surname">Surname <span class="required">*</span></label>
+                        <input type="text" id="surname" name="surname" required>
+                        <div class="error-message" id="surnameError">Surname is required</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="otherName">Other Name</label>
+                        <input type="text" id="otherName" name="other_name">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="phone">Phone Number <span class="required">*</span></label>
+                        <input type="tel" id="phone" name="phone" required>
+                        <div class="error-message" id="phoneError">Phone number is required</div>
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label for="address">Address <span class="required">*</span></label>
+                        <input type="text" id="address" name="address" required>
+                        <div class="error-message" id="addressError">Address is required</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="role">Role <span class="required">*</span></label>
+                        <select id="role" name="role" required>
+                            <option value="">Select a role</option>
+                            <option value="admin">Administrator</option>
+                            <option value="manager">Warehouse Manager</option>
+                            <option value="supervisor">Supervisor</option>
+                            <option value="operator">Warehouse Operator</option>
+                            <option value="clerk">Inventory Clerk</option>
+                        </select>
+                        <div class="error-message" id="roleError">Role is required</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password">Password <span class="required">*</span></label>
+                        <div class="input-wrapper">
+                            <input type="password" id="password" name="password" required>
+                            <button type="button" class="password-toggle" onclick="togglePassword('password')">
+                                <i class="fas fa-eye" id="passwordToggleIcon"></i>
+                            </button>
+                        </div>
+                        <div class="error-message" id="passwordError">Password must be at least 8 characters</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="confirmPassword">Confirm Password <span class="required">*</span></label>
+                        <div class="input-wrapper">
+                            <input type="password" id="confirmPassword" name="confirm_password" required>
+                            <button type="button" class="password-toggle" onclick="togglePassword('confirmPassword')">
+                                <i class="fas fa-eye" id="confirmPasswordToggleIcon"></i>
+                            </button>
+                        </div>
+                        <div class="error-message" id="confirmPasswordError">Passwords do not match</div>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-user-plus"></i>
+                        Create Account
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="clearForm()">
+                        <i class="fas fa-redo"></i>
+                        Clear Form
+                    </button>
+                </div>
+            </form>
+
+            <div class="login-link">
+                Already have an account? <a href="index.html">Sign in here</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function togglePassword(fieldId) {
+            const field = document.getElementById(fieldId);
+            const icon = document.getElementById(fieldId + 'ToggleIcon');
+            
+            if (field.type === 'password') {
+                field.type = 'text';
+                icon.className = 'fas fa-eye-slash';
+            } else {
+                field.type = 'password';
+                icon.className = 'fas fa-eye';
+            }
+        }
+
+        function clearForm() {
+            document.getElementById('registerForm').reset();
+            clearErrors();
+        }
+
+        function showError(fieldId, message) {
+            const field = document.getElementById(fieldId);
+            const errorDiv = document.getElementById(fieldId + 'Error');
+            
+            field.classList.add('error');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+
+        function hideError(fieldId) {
+            const field = document.getElementById(fieldId);
+            const errorDiv = document.getElementById(fieldId + 'Error');
+            
+            field.classList.remove('error');
+            errorDiv.style.display = 'none';
+        }
+
+        function clearErrors() {
+            const errorFields = ['username', 'firstName', 'surname', 'phone', 'address', 'role', 'password', 'confirmPassword'];
+            errorFields.forEach(field => hideError(field));
+        }
+
+        function validateForm() {
+            clearErrors();
+            let isValid = true;
+
+            // Username validation
+            const username = document.getElementById('username').value.trim();
+            if (!username) {
+                showError('username', 'Username is required');
+                isValid = false;
+            } else if (username.length < 3) {
+                showError('username', 'Username must be at least 3 characters');
+                isValid = false;
+            }
+
+            // First name validation
+            const firstName = document.getElementById('firstName').value.trim();
+            if (!firstName) {
+                showError('firstName', 'First name is required');
+                isValid = false;
+            }
+
+            // Surname validation
+            const surname = document.getElementById('surname').value.trim();
+            if (!surname) {
+                showError('surname', 'Surname is required');
+                isValid = false;
+            }
+
+            // Phone validation
+            const phone = document.getElementById('phone').value.trim();
+            if (!phone) {
+                showError('phone', 'Phone number is required');
+                isValid = false;
+            } else if (!/^[\+]?[0-9\s\-\(\)]+$/.test(phone)) {
+                showError('phone', 'Please enter a valid phone number');
+                isValid = false;
+            }
+
+            // Address validation
+            const address = document.getElementById('address').value.trim();
+            if (!address) {
+                showError('address', 'Address is required');
+                isValid = false;
+            }
+
+            // Role validation
+            const role = document.getElementById('role').value;
+            if (!role) {
+                showError('role', 'Role is required');
+                isValid = false;
+            }
+
+            // Password validation
+            const password = document.getElementById('password').value;
+            if (!password) {
+                showError('password', 'Password is required');
+                isValid = false;
+            } else if (password.length < 8) {
+                showError('password', 'Password must be at least 8 characters');
+                isValid = false;
+            }
+
+            // Confirm password validation
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            if (!confirmPassword) {
+                showError('confirmPassword', 'Please confirm your password');
+                isValid = false;
+            } else if (password !== confirmPassword) {
+                showError('confirmPassword', 'Passwords do not match');
+                isValid = false;
+            }
+
+            return isValid;
+        }
+
+        // Form submission
+        document.getElementById('registerForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            if (validateForm()) {
+                try {
+                    // Show loading state
+                    const submitBtn = document.querySelector('.btn-primary');
+                    const originalText = submitBtn.innerHTML;
+                    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating Account...';
+                    submitBtn.disabled = true;
+                    
+                    const formData = new FormData(this);
+                    const userData = Object.fromEntries(formData);
+                    
+                    // Remove confirm_password from data sent to backend
+                    delete userData.confirm_password;
+                    
+                    console.log('Sending user registration data:', { ...userData, password: '[HIDDEN]' });
+                    
+                    // Send to backend API
+                    const response = await fetch('/api/auth/register', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(userData)
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (response.ok) {
+                        // Show success message
+                        document.getElementById('successMessage').innerHTML = `
+                            <i class="fas fa-check-circle"></i>
+                            Registration successful! You can now log in with your credentials.
+                        `;
+                        document.getElementById('successMessage').style.display = 'block';
+                        
+                        // Scroll to top to show success message
+                        document.querySelector('.register-container').scrollIntoView({ behavior: 'smooth' });
+                        
+                        // Clear form after successful submission
+                        setTimeout(() => {
+                            clearForm();
+                            document.getElementById('successMessage').style.display = 'none';
+                            // Redirect to login page
+                            window.location.href = 'index.html';
+                        }, 3000);
+                    } else {
+                        // Handle validation errors
+                        if (result.details && Array.isArray(result.details)) {
+                            result.details.forEach(error => {
+                                showError(error.field, error.message);
+                            });
+                        } else {
+                            // Show generic error
+                            alert(result.message || 'Registration failed. Please try again.');
+                        }
+                    }
+                    
+                } catch (error) {
+                    console.error('Registration error:', error);
+                    alert('Network error. Please check your connection and try again.');
+                } finally {
+                    // Reset button state
+                    const submitBtn = document.querySelector('.btn-primary');
+                    submitBtn.innerHTML = originalText;
+                    submitBtn.disabled = false;
+                }
+            }
+        });
+
+        // Real-time validation
+        document.getElementById('confirmPassword').addEventListener('input', function() {
+            const password = document.getElementById('password').value;
+            const confirmPassword = this.value;
+            
+            if (confirmPassword && password !== confirmPassword) {
+                showError('confirmPassword', 'Passwords do not match');
+            } else {
+                hideError('confirmPassword');
+            }
+        });
+
+        document.getElementById('password').addEventListener('input', function() {
+            const password = this.value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            if (password.length < 8 && password.length > 0) {
+                showError('password', 'Password must be at least 8 characters');
+            } else {
+                hideError('password');
+            }
+            
+            // Re-validate confirm password if it has been filled
+            if (confirmPassword && password !== confirmPassword) {
+                showError('confirmPassword', 'Passwords do not match');
+            } else if (confirmPassword) {
+                hideError('confirmPassword');
+            }
+        });
+
+        // Username availability checking
+        let usernameCheckTimeout;
+        document.getElementById('username').addEventListener('input', function() {
+            const username = this.value.trim();
+            
+            // Clear previous timeout
+            if (usernameCheckTimeout) {
+                clearTimeout(usernameCheckTimeout);
+            }
+            
+            // Hide previous error/success states
+            hideError('username');
+            
+            if (username.length >= 3) {
+                // Debounce the API call
+                usernameCheckTimeout = setTimeout(async () => {
+                    try {
+                        const response = await fetch('/api/auth/check-username', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({ username })
+                        });
+                        
+                        const result = await response.json();
+                        
+                        if (response.ok) {
+                            if (!result.available) {
+                                showError('username', 'Username is already taken');
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Username check error:', error);
+                        // Don't show error to user for availability check failures
+                    }
+                }, 500); // 500ms delay
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Warehouse Management System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="app.css">
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-warehouse"></i>
+                    <h1>Omototo Agro-Allied Services</h1>
+                </div>
+                <div class="user-info">
+                    <span>Loading...</span>
+                    <div class="user-avatar" title="Click to logout">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <button class="logout-btn" title="Logout">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Logout</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Button Navigation -->
+        <div class="button-nav">
+            <button class="nav-btn active" data-tab="dashboard">
+                <i class="fas fa-chart-pie"></i>
+                <span>Dashboard</span>
+            </button>
+            <button class="nav-btn" data-tab="goods-in">
+                <i class="fas fa-box-open"></i>
+                <span>Goods In</span>
+            </button>
+            <button class="nav-btn" data-tab="goods-out">
+                <i class="fas fa-truck-loading"></i>
+                <span>Goods Out</span>
+            </button>
+            <button class="nav-btn" data-tab="settings">
+                <i class="fas fa-cog"></i>
+                <span>Settings</span>
+            </button>
+        </div>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Dashboard Tab -->
+            <div id="dashboard" class="tab-content active">
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-icon">
+                            <i class="fas fa-weight"></i>
+                        </div>
+                        <div class="metric-value">12,458 kg</div>
+                        <div class="metric-label">Total Weight In</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon">
+                            <i class="fas fa-money-bill-wave"></i>
+                        </div>
+                        <div class="metric-value">$86,540</div>
+                        <div class="metric-label">Amount Paid</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon">
+                            <i class="fas fa-hand-holding-usd"></i>
+                        </div>
+                        <div class="metric-value">$12,350</div>
+                        <div class="metric-label">Amount Due</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon">
+                            <i class="fas fa-file-invoice-dollar"></i>
+                        </div>
+                        <div class="metric-value">$5,670</div>
+                        <div class="metric-label">Debt</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">
+                        <i class="fas fa-calendar"></i>
+                        Date Range Filter
+                    </div>
+                    <div class="date-filter">
+                        <button class="date-btn active">Today</button>
+                        <button class="date-btn">This Week</button>
+                        <button class="date-btn">This Month</button>
+                        <button class="date-btn">Custom Range</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">
+                        <i class="fas fa-bolt"></i>
+                        Quick Actions
+                    </div>
+                    <div class="quick-actions">
+                        <button class="action-btn primary">
+                            <i class="fas fa-plus-circle"></i>
+                            Add Goods In
+                        </button>
+                        <button class="action-btn secondary">
+                            <i class="fas fa-minus-circle"></i>
+                            Add Goods Out
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">
+                        <i class="fas fa-history"></i>
+                        Recent Activities
+                    </div>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Type</th>
+                                    <th>Weight (kg)</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>12/05/2023</td>
+                                    <td><span style="color: green;">In</span></td>
+                                    <td>1,250</td>
+                                    <td>$8,750</td>
+                                    <td><span class="status completed">Completed</span></td>
+                                </tr>
+                                <tr>
+                                    <td>11/05/2023</td>
+                                    <td><span style="color: red;">Out</span></td>
+                                    <td>850</td>
+                                    <td>$5,950</td>
+                                    <td><span class="status completed">Completed</span></td>
+                                </tr>
+                                <tr>
+                                    <td>10/05/2023</td>
+                                    <td><span style="color: green;">In</span></td>
+                                    <td>2,500</td>
+                                    <td>$15,000</td>
+                                    <td><span class="status pending">Pending</span></td>
+                                </tr>
+                                <tr>
+                                    <td>09/05/2023</td>
+                                    <td><span style="color: red;">Out</span></td>
+                                    <td>650</td>
+                                    <td>$5,200</td>
+                                    <td><span class="status completed">Completed</span></td>
+                                </tr>
+                                <tr>
+                                    <td>08/05/2023</td>
+                                    <td><span style="color: green;">In</span></td>
+                                    <td>1,800</td>
+                                    <td>$12,600</td>
+                                    <td><span class="status completed">Completed</span></td>
+                                </tr>
+                                <tr>
+                                    <td>07/05/2023</td>
+                                    <td><span style="color: red;">Out</span></td>
+                                    <td>1,200</td>
+                                    <td>$8,400</td>
+                                    <td><span class="status completed">Completed</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Goods In Tab -->
+            <div id="goods-in" class="tab-content">
+                <div class="card">
+                    <div class="card-title">
+                        <i class="fas fa-box-open"></i>
+                        Goods In Management
+                    </div>
+                    <button class="btn btn-primary add-goods-btn" style="margin-bottom: 20px;">
+                        <i class="fas fa-plus-circle"></i> Add Goods In
+                    </button>
+
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Name</th>
+                                    <th>Weight (kg)</th>
+                                    <th>Price/kg</th>
+                                    <th>Amount</th>
+                                    <th>Account No.</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>12/05/2023</td>
+                                    <td>Rice Grains</td>
+                                    <td>1,250</td>
+                                    <td>$7.00</td>
+                                    <td>$8,750</td>
+                                    <td>****4589</td>
+                                    <td><span class="status completed">Completed</span></td>
+                                    <td>
+                                        <button class="view-btn" data-date="12/05/2023" data-item="Rice Grains" title="View Receipt">
+                                            <i class="fas fa-eye"></i>
+                                            <span>View</span>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>10/05/2023</td>
+                                    <td>Wheat</td>
+                                    <td>2,500</td>
+                                    <td>$6.00</td>
+                                    <td>$15,000</td>
+                                    <td>****3267</td>
+                                    <td><span class="status pending">Pending</span></td>
+                                    <td>
+                                        <button class="view-btn" data-date="10/05/2023" data-item="Wheat" title="View Receipt">
+                                            <i class="fas fa-eye"></i>
+                                            <span>View</span>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>08/05/2023</td>
+                                    <td>Corn</td>
+                                    <td>1,800</td>
+                                    <td>$7.00</td>
+                                    <td>$12,600</td>
+                                    <td>****4589</td>
+                                    <td><span class="status completed">Completed</span></td>
+                                    <td>
+                                        <button class="view-btn" data-date="08/05/2023" data-item="Corn" title="View Receipt">
+                                            <i class="fas fa-eye"></i>
+                                            <span>View</span>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>05/05/2023</td>
+                                    <td>Soybeans</td>
+                                    <td>1,500</td>
+                                    <td>$5.50</td>
+                                    <td>$8,250</td>
+                                    <td>****7845</td>
+                                    <td><span class="status completed">Completed</span></td>
+                                    <td>
+                                        <button class="view-btn" data-date="05/05/2023" data-item="Soybeans" title="View Receipt">
+                                            <i class="fas fa-eye"></i>
+                                            <span>View</span>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>03/05/2023</td>
+                                    <td>Barley</td>
+                                    <td>800</td>
+                                    <td>$8.00</td>
+                                    <td>$6,400</td>
+                                    <td>****9921</td>
+                                    <td><span class="status completed">Completed</span></td>
+                                    <td>
+                                        <button class="view-btn" data-date="03/05/2023" data-item="Barley" title="View Receipt">
+                                            <i class="fas fa-eye"></i>
+                                            <span>View</span>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="pagination">
+                        <button class="pagination-btn"><i class="fas fa-chevron-left"></i></button>
+                        <button class="pagination-btn active">1</button>
+                        <button class="pagination-btn">2</button>
+                        <button class="pagination-btn">3</button>
+                        <button class="pagination-btn"><i class="fas fa-chevron-right"></i></button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Goods Out Tab -->
+            <div id="goods-out" class="tab-content">
+                <div class="card">
+                    <div class="card-title">
+                        <i class="fas fa-truck-loading"></i>
+                        Goods Out Management
+                    </div>
+                    <button class="btn btn-primary" style="margin-bottom: 20px;">
+                        <i class="fas fa-plus-circle"></i> Add Goods Out
+                    </button>
+
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Loader</th>
+                                    <th>Weight (kg)</th>
+                                    <th>Truck No.</th>
+                                    <th>Driver No.</th>
+                                    <th>Price/kg</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>11/05/2023</td>
+                                    <td>John Smith</td>
+                                    <td>850</td>
+                                    <td>TRK-7845</td>
+                                    <td>DRV-4521</td>
+                                    <td>$7.00</td>
+                                    <td>$5,950</td>
+                                    <td><span class="status completed">Completed</span></td>
+                                    <td>
+                                        <i class="fas fa-eye" style="color: var(--primary); cursor: pointer;" title="View Receipt"></i>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>09/05/2023</td>
+                                    <td>Mike Johnson</td>
+                                    <td>650</td>
+                                    <td>TRK-2367</td>
+                                    <td>DRV-7854</td>
+                                    <td>$8.00</td>
+                                    <td>$5,200</td>
+                                    <td><span class="status completed">Completed</span></td>
+                                    <td>
+                                        <i class="fas fa-eye" style="color: var(--primary); cursor: pointer;" title="View Receipt"></i>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>07/05/2023</td>
+                                    <td>Sarah Williams</td>
+                                    <td>1,200</td>
+                                    <td>TRK-7845</td>
+                                    <td>DRV-4521</td>
+                                    <td>$7.00</td>
+                                    <td>$8,400</td>
+                                    <td><span class="status completed">Completed</span></td>
+                                    <td>
+                                        <i class="fas fa-eye" style="color: var(--primary); cursor: pointer;" title="View Receipt"></i>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>04/05/2023</td>
+                                    <td>Robert Brown</td>
+                                    <td>1,500</td>
+                                    <td>TRK-5698</td>
+                                    <td>DRV-3214</td>
+                                    <td>$6.50</td>
+                                    <td>$9,750</td>
+                                    <td><span class="status completed">Completed</span></td>
+                                    <td>
+                                        <i class="fas fa-eye" style="color: var(--primary); cursor: pointer;" title="View Receipt"></i>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>01/05/2023</td>
+                                    <td>John Smith</td>
+                                    <td>950</td>
+                                    <td>TRK-1254</td>
+                                    <td>DRV-6589</td>
+                                    <td>$7.50</td>
+                                    <td>$7,125</td>
+                                    <td><span class="status completed">Completed</span></td>
+                                    <td>
+                                        <i class="fas fa-eye" style="color: var(--primary); cursor: pointer;" title="View Receipt"></i>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="pagination">
+                        <button class="pagination-btn"><i class="fas fa-chevron-left"></i></button>
+                        <button class="pagination-btn active">1</button>
+                        <button class="pagination-btn">2</button>
+                        <button class="pagination-btn">3</button>
+                        <button class="pagination-btn"><i class="fas fa-chevron-right"></i></button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Tab -->
+            <div id="settings" class="tab-content">
+                <div class="settings-grid">
+                    <div class="card">
+                        <div class="card-title">
+                            <i class="fas fa-user-cog"></i>
+                            Profile Settings
+                        </div>
+                        <div class="form-group">
+                            <label for="name">Full Name</label>
+                            <input type="text" id="name" value="Admin User">
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Email Address</label>
+                            <input type="email" id="email" value="admin@example.com">
+                        </div>
+                        <div class="form-group">
+                            <label for="phone">Phone Number</label>
+                            <input type="tel" id="phone" value="+1 (555) 123-4567">
+                        </div>
+                        <div class="form-group">
+                            <label for="position">Position</label>
+                            <input type="text" id="position" value="Warehouse Manager">
+                        </div>
+                        <div class="form-actions">
+                            <button class="btn btn-secondary">Cancel</button>
+                            <button class="btn btn-primary">Save Changes</button>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-title">
+                            <i class="fas fa-shield-alt"></i>
+                            Security Settings
+                        </div>
+                        <div class="form-group">
+                            <label for="current-password">Current Password</label>
+                            <input type="password" id="current-password">
+                        </div>
+                        <div class="form-group">
+                            <label for="new-password">New Password</label>
+                            <input type="password" id="new-password">
+                        </div>
+                        <div class="form-group">
+                            <label for="confirm-password">Confirm New Password</label>
+                            <input type="password" id="confirm-password">
+                        </div>
+                        <div class="form-group">
+                            <label class="checkbox-container">
+                                <input type="checkbox" id="two-factor">
+                                <span>Enable Two-Factor Authentication</span>
+                            </label>
+                        </div>
+                        <div class="form-actions">
+                            <button class="btn btn-secondary">Cancel</button>
+                            <button class="btn btn-primary">Update Security</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Goods In Modal -->
+    <div id="goodsInModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-box-open"></i> Add Goods In</h2>
+                <span class="close">&times;</span>
+            </div>
+            <form id="goodsInForm">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="goods-name">Name *</label>
+                        <input type="text" id="goods-name" name="name" required placeholder="Enter goods name">
+                    </div>
+                    <div class="form-group">
+                        <label for="goods-weight">Weight (kg) *</label>
+                        <input type="number" id="goods-weight" name="weight" required placeholder="Enter weight" step="0.01" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="acct-no">Account Number *</label>
+                        <input type="text" id="acct-no" name="acct_no" required placeholder="Enter account number">
+                    </div>
+                    <div class="form-group">
+                        <label for="bank-name">Bank *</label>
+                        <input type="text" id="bank-name" name="bank" required placeholder="Enter bank name">
+                    </div>
+                    <div class="form-group">
+                        <label for="phone-no">Phone Number *</label>
+                        <input type="tel" id="phone-no" name="phone_no" required placeholder="Enter phone number">
+                    </div>
+                    <div class="form-group">
+                        <label for="amount-paid">Amount Paid *</label>
+                        <input type="number" id="amount-paid" name="amount_paid" required placeholder="Enter amount paid" step="0.01" min="0">
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary cancel-btn">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Save Goods In
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
