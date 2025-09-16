@@ -522,6 +522,358 @@ function getStatusClass(status) {
     }
 }
 
+// Print Item Details Function
+async function printItemDetails(inId, itemName, date) {
+    // Find the item data from currentGoodsData
+    const itemData = currentGoodsData.find(item => item.in_id === inId);
+    
+    if (!itemData) {
+        showErrorMessage('Item data not found for printing.');
+        return;
+    }
+    
+    // Fetch payment history for this item
+    let paymentHistory = [];
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/payments/${inId}`, {
+            method: 'GET',
+            credentials: 'include'
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            if (result.success) {
+                paymentHistory = result.data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+            }
+        }
+    } catch (error) {
+        console.error('Error fetching payment history for print:', error);
+    }
+    
+    const printWindow = window.open('', '_blank');
+    const currentDate = new Date().toLocaleDateString('en-GB');
+    const currentTime = new Date().toLocaleTimeString('en-GB', { hour12: false });
+    
+    // Generate payment transactions table
+    const paymentRows = paymentHistory.length > 0 
+        ? paymentHistory.map(payment => `
+            <tr>
+                <td style="padding: 4px 8px; border-bottom: 1px solid #eee;">${formatDate(payment.created_at)}</td>
+                <td style="padding: 4px 8px; border-bottom: 1px solid #eee; text-align: right;">₦${payment.amount_paid.toLocaleString()}</td>
+                <td style="padding: 4px 8px; border-bottom: 1px solid #eee; font-size: 10px;">${payment.created_by || 'Unknown'}</td>
+            </tr>
+        `).join('')
+        : '<tr><td colspan="3" style="padding: 10px; text-align: center; color: #666; font-style: italic;">No payment transactions recorded</td></tr>';
+    
+    const totalPaid = paymentHistory.reduce((sum, payment) => sum + payment.amount_paid, 0);
+    
+    const printContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Item Details - ${itemData.in_id}</title>
+            <style>
+                * {
+                    margin: 0;
+                    padding: 0;
+                    box-sizing: border-box;
+                }
+                
+                body {
+                    font-family: 'Arial', sans-serif;
+                    font-size: 12px;
+                    line-height: 1.4;
+                    color: #333;
+                    background: white;
+                }
+                
+                .details-container {
+                    max-width: 700px;
+                    margin: 15px auto;
+                    padding: 20px;
+                    border: 2px solid #2b6777;
+                    height: auto;
+                    page-break-inside: avoid;
+                }
+                
+                .header {
+                    text-align: center;
+                    border-bottom: 2px solid #2b6777;
+                    padding-bottom: 12px;
+                    margin-bottom: 15px;
+                }
+                
+                .company-name {
+                    font-size: 16px;
+                    font-weight: bold;
+                    color: #2b6777;
+                    margin-bottom: 3px;
+                }
+                
+                .details-title {
+                    font-size: 14px;
+                    font-weight: bold;
+                    margin: 5px 0;
+                    color: #155724;
+                }
+                
+                .details-id {
+                    font-family: monospace;
+                    background: #f8f9fa;
+                    padding: 3px 8px;
+                    border-radius: 4px;
+                    display: inline-block;
+                    margin: 5px 0;
+                    font-size: 11px;
+                }
+                
+                .info-grid {
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    gap: 15px;
+                    margin: 15px 0;
+                }
+                
+                .info-section {
+                    border: 1px solid #ddd;
+                    padding: 12px;
+                    border-radius: 6px;
+                    background: #fafafa;
+                }
+                
+                .info-title {
+                    font-weight: bold;
+                    color: #2b6777;
+                    margin-bottom: 8px;
+                    border-bottom: 1px solid #eee;
+                    padding-bottom: 4px;
+                    font-size: 12px;
+                }
+                
+                .info-row {
+                    display: flex;
+                    justify-content: space-between;
+                    margin: 6px 0;
+                    padding: 2px 0;
+                    font-size: 11px;
+                }
+                
+                .info-label {
+                    font-weight: 500;
+                    color: #555;
+                    flex: 0 0 45%;
+                }
+                
+                .info-value {
+                    font-weight: 600;
+                    color: #333;
+                    text-align: right;
+                    flex: 1;
+                }
+                
+                .amount-highlight {
+                    color: #28a745;
+                    font-size: 12px;
+                    font-weight: bold;
+                }
+                
+                .status {
+                    padding: 2px 6px;
+                    border-radius: 8px;
+                    font-size: 9px;
+                    font-weight: 500;
+                    display: inline-block;
+                }
+                
+                .payment-history {
+                    grid-column: 1 / -1;
+                    border: 1px solid #2b6777;
+                    border-radius: 6px;
+                    padding: 12px;
+                    margin-top: 10px;
+                    background: #f8f9fa;
+                }
+                
+                .payment-history-title {
+                    font-weight: bold;
+                    color: #2b6777;
+                    margin-bottom: 8px;
+                    font-size: 12px;
+                }
+                
+                .payment-table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    font-size: 10px;
+                }
+                
+                .payment-table th {
+                    background: #2b6777;
+                    color: white;
+                    padding: 6px 8px;
+                    text-align: left;
+                    font-size: 10px;
+                }
+                
+                .payment-table td {
+                    padding: 4px 8px;
+                    border-bottom: 1px solid #eee;
+                }
+                
+                .summary-row {
+                    background: #e8f4f8;
+                    border: 1px solid #2b6777;
+                    border-radius: 4px;
+                    padding: 8px;
+                    margin-top: 8px;
+                    display: flex;
+                    justify-content: space-between;
+                    font-weight: bold;
+                    font-size: 11px;
+                }
+                
+                .footer {
+                    margin-top: 15px;
+                    padding-top: 10px;
+                    border-top: 1px solid #ddd;
+                    text-align: center;
+                    font-size: 9px;
+                    color: #666;
+                }
+                
+                @media print {
+                    .details-container {
+                        margin: 0;
+                        padding: 15px;
+                        border: 1px solid #2b6777;
+                        box-shadow: none;
+                        max-width: 100%;
+                        width: 100%;
+                        page-break-inside: avoid;
+                    }
+                    
+                    body {
+                        font-size: 10px;
+                        margin: 0;
+                        padding: 10px;
+                    }
+                    
+                    .info-grid {
+                        gap: 10px;
+                    }
+                    
+                    .info-section {
+                        padding: 8px;
+                    }
+                    
+                    .payment-history {
+                        padding: 8px;
+                    }
+                    
+                    .footer {
+                        margin-top: 10px;
+                        font-size: 8px;
+                    }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="details-container">
+                <div class="header">
+                    <div class="company-name">Omototo Agro-Allied Services</div>
+                    <div class="details-title">ITEM DETAILS & PAYMENT HISTORY</div>
+                    <div class="details-id">Item ID: ${itemData.in_id}</div>
+                </div>
+                
+                <div class="info-grid">
+                    <div class="info-section">
+                        <div class="info-title">Transaction Details</div>
+                        <div class="info-row">
+                            <span class="info-label">Date Created:</span>
+                            <span class="info-value">${formatDate(itemData.created_at)}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Goods Name:</span>
+                            <span class="info-value">${itemData.name}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Weight:</span>
+                            <span class="info-value">${itemData.weight.toLocaleString()} kg</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Price per kg:</span>
+                            <span class="info-value">₦${itemData.price_per_kg.toFixed(2)}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Created by:</span>
+                            <span class="info-value">${itemData.created_by}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="info-section">
+                        <div class="info-title">Contact & Banking</div>
+                        <div class="info-row">
+                            <span class="info-label">Account No:</span>
+                            <span class="info-value">${itemData.acct_no}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Bank:</span>
+                            <span class="info-value">${itemData.bank}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Phone Number:</span>
+                            <span class="info-value">${itemData.phone_no}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Status:</span>
+                            <span class="info-value"><span class="status ${itemData.status}">${itemData.status.charAt(0).toUpperCase() + itemData.status.slice(1)}</span></span>
+                        </div>
+                    </div>
+                    
+                    <div class="payment-history">
+                        <div class="payment-history-title">Payment Transaction History</div>
+                        <table class="payment-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Amount Paid</th>
+                                    <th>Processed By</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${paymentRows}
+                            </tbody>
+                        </table>
+                        
+                        <div class="summary-row">
+                            <span>Total Amount: ₦${itemData.amount.toLocaleString()}</span>
+                            <span>Total Paid: ₦${totalPaid.toLocaleString()}</span>
+                            <span>Balance Due: ₦${(itemData.amount - totalPaid).toLocaleString()}</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="footer">
+                    <p>Generated on: ${currentDate} at ${currentTime} | Omototo Agro-Allied Services</p>
+                    <p style="margin-top: 5px; font-size: 8px; color: #888;">Powered by Hemdeeii Dev 08142263056</p>
+                </div>
+            </div>
+        </body>
+        </html>
+    `;
+    
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+    
+    // Wait for content to load then print
+    printWindow.onload = function() {
+        setTimeout(() => {
+            printWindow.print();
+            printWindow.close();
+        }, 250);
+    };
+}
+
 // Print Goods Receipt Function
 function printGoodsReceipt(goodsData) {
     const printWindow = window.open('', '_blank');
@@ -808,6 +1160,7 @@ function printGoodsReceipt(goodsData) {
                     <p>This is a computer-generated receipt.</p>
                     <p>Printed on: ${currentDate} at ${currentTime}</p>
                     <p>Thank you for your business!</p>
+                    <p style="margin-top: 8px; font-size: 9px; color: #888;">Powered by Hemdeeii Dev 08142263056</p>
                 </div>
             </div>
         </body>
@@ -997,6 +1350,9 @@ async function showItemDetailsModal(inId, date, itemName) {
                 </div>
                 
                 <div class="form-actions" style="margin-top: 20px;">
+                    <button type="button" class="btn btn-secondary print-details-btn">
+                        <i class="fas fa-print"></i> Print Details
+                    </button>
                     <button type="button" class="btn btn-secondary close-modal-btn">Close</button>
                 </div>
             </div>
@@ -1008,6 +1364,7 @@ async function showItemDetailsModal(inId, date, itemName) {
     // Add event listeners for closing modal
     const closeBtn = modal.querySelector('.close');
     const closeModalBtn = modal.querySelector('.close-modal-btn');
+    const printDetailsBtn = modal.querySelector('.print-details-btn');
     
     closeBtn.addEventListener('click', () => {
         modal.remove();
@@ -1015,6 +1372,10 @@ async function showItemDetailsModal(inId, date, itemName) {
     
     closeModalBtn.addEventListener('click', () => {
         modal.remove();
+    });
+    
+    printDetailsBtn.addEventListener('click', () => {
+        printItemDetails(inId, itemName, date);
     });
     
     // Close modal when clicking outside
