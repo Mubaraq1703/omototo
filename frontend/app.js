@@ -1733,7 +1733,7 @@ async function submitGoodsOut(event) {
             const weightDiffIcon = weightDiff > 0 ? 'fas fa-arrow-up' : (weightDiff < 0 ? 'fas fa-arrow-down' : 'fas fa-equals');
             
             const successMessage = `
-                <div style="text-align: center; padding: 20px 0;">
+                <div style="text-align: center; padding: 20px 0">
                     <div style="background: linear-gradient(135deg, #28a745, #20c997); color: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);">
                         <i class="fas fa-truck-loading" style="font-size: 2.5em; margin-bottom: 10px; display: block;"></i>
                         <h3 style="margin: 0 0 5px 0; font-size: 1.4em;">🎉 Goods Out Record Created Successfully!</h3>
@@ -2735,7 +2735,7 @@ function renderGoodsOutTablePage() {
     if (filteredGoodsOutData.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="5" style="text-align: center; padding: 40px; color: #666;">
+                <td colspan="8" style="text-align: center; padding: 40px; color: #666;">
                     <i class="fas fa-truck-loading" style="font-size: 24px; margin-bottom: 10px; display: block;"></i>
                     No goods out records found.
                 </td>
@@ -2754,18 +2754,55 @@ function renderGoodsOutTablePage() {
         const row = document.createElement('tr');
         const formattedDate = formatDate(item.created_at);
         
+        // Calculate weight difference
+        const weightDiff = (item.delivered_weight || 0) - (item.weight || 0);
+        const weightDiffFormatted = weightDiff > 0 ? `+${weightDiff.toFixed(2)}` : weightDiff.toFixed(2);
+        const weightDiffColor = weightDiff > 0 ? '#28a745' : (weightDiff < 0 ? '#dc3545' : '#666');
+        
         // Store out_id as data attribute for reference
         row.setAttribute('data-out-id', item.out_id);
         
         row.innerHTML = `
             <td>${formattedDate}</td>
             <td>${item.loader}</td>
-            <td>${item.weight.toLocaleString()}</td>
+            <td>${(item.weight || 0).toLocaleString()}</td>
             <td>${item.truck_no}</td>
             <td>${item.driver_no}</td>
+            <td>${(item.delivered_weight || 0).toLocaleString()}</td>
+            <td style="color: ${weightDiffColor}; font-weight: 500;">${weightDiffFormatted}</td>
+            <td>
+                <div style="display: flex; gap: 5px; justify-content: center;">
+                    <button class="view-btn" data-id="${item.out_id}" title="View Details">
+                        <i class="fas fa-eye"></i>
+                        <span>View</span>
+                    </button>
+                    <button class="print-btn" data-id="${item.out_id}" title="Print Receipt">
+                        <i class="fas fa-print"></i>
+                        <span>Print</span>
+                    </button>
+                </div>
+            </td>
         `;
         
         tbody.appendChild(row);
+    });
+    
+    // Re-attach event listeners for action buttons
+    const viewButtons = tbody.querySelectorAll('.view-btn');
+    const printButtons = tbody.querySelectorAll('.print-btn');
+    
+    viewButtons.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const outId = e.currentTarget.getAttribute('data-id');
+            viewGoodsOutDetails(outId);
+        });
+    });
+    
+    printButtons.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const outId = e.currentTarget.getAttribute('data-id');
+            printGoodsOutReceipt(outId);
+        });
     });
 }
 
@@ -2929,4 +2966,207 @@ function clearGoodsOutFilters() {
     // Re-render table and pagination
     renderGoodsOutTablePage();
     updateGoodsOutPaginationControls();
+}
+
+// View goods out details
+function viewGoodsOutDetails(outId) {
+    // Find the specific goods out record
+    const goodsOutData = currentGoodsOutData.find(item => item.out_id === outId);
+    
+    if (!goodsOutData) {
+        showErrorMessage('Goods out record not found.');
+        return;
+    }
+    
+    // Calculate weight difference
+    const weightDiff = (goodsOutData.delivered_weight || 0) - (goodsOutData.weight || 0);
+    const weightDiffFormatted = weightDiff > 0 ? `+${weightDiff.toFixed(2)} kg` : `${weightDiff.toFixed(2)} kg`;
+    const weightDiffColor = weightDiff > 0 ? '#28a745' : (weightDiff < 0 ? '#dc3545' : '#666');
+    
+    const modalContent = `
+        <div style="max-width: 600px; margin: 0 auto;">
+            <div class="info-section">
+                <div class="info-title">Shipment Information</div>
+                <div class="info-row">
+                    <span class="info-label">Out ID:</span>
+                    <span class="info-value">${goodsOutData.out_id}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Date:</span>
+                    <span class="info-value">${formatDate(goodsOutData.created_at)}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Loader:</span>
+                    <span class="info-value">${goodsOutData.loader}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Company:</span>
+                    <span class="info-value">${goodsOutData.company || 'N/A'}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Created by:</span>
+                    <span class="info-value">${goodsOutData.created_by}</span>
+                </div>
+            </div>
+            
+            <div class="info-section">
+                <div class="info-title">Weight Information</div>
+                <div class="info-row">
+                    <span class="info-label">Original Weight:</span>
+                    <span class="info-value">${(goodsOutData.weight || 0).toLocaleString()} kg</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Delivered Weight:</span>
+                    <span class="info-value">${(goodsOutData.delivered_weight || 0).toLocaleString()} kg</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Weight Difference:</span>
+                    <span class="info-value" style="color: ${weightDiffColor}; font-weight: 600;">${weightDiffFormatted}</span>
+                </div>
+            </div>
+            
+            <div class="info-section">
+                <div class="info-title">Transport Information</div>
+                <div class="info-row">
+                    <span class="info-label">Truck Number:</span>
+                    <span class="info-value">${goodsOutData.truck_no}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Driver Number:</span>
+                    <span class="info-value">${goodsOutData.driver_no}</span>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    showModalMessage(modalContent, 'info', 'Goods Out Details', [
+        {
+            text: 'Print Receipt',
+            class: 'btn-secondary',
+            icon: 'fas fa-print',
+            action: () => {
+                document.querySelector('.message-modal').remove();
+                printGoodsOutReceipt(outId);
+            }
+        },
+        {
+            text: 'Close',
+            class: 'btn-primary',
+            action: () => document.querySelector('.message-modal').remove()
+        }
+    ]);
+}
+
+// Print goods out receipt
+function printGoodsOutReceipt(outId) {
+    // Find the specific goods out record
+    const goodsOutData = currentGoodsOutData.find(item => item.out_id === outId);
+    
+    if (!goodsOutData) {
+        showErrorMessage('Goods out record not found.');
+        return;
+    }
+    
+    // Calculate weight difference
+    const weightDiff = (goodsOutData.delivered_weight || 0) - (goodsOutData.weight || 0);
+    const weightDiffFormatted = weightDiff > 0 ? `+${weightDiff.toFixed(2)} kg` : `${weightDiff.toFixed(2)} kg`;
+    
+    // Create print content
+    const printContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Goods Out Receipt - ${goodsOutData.out_id}</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
+                .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 20px; margin-bottom: 30px; }
+                .company-name { font-size: 24px; font-weight: bold; margin-bottom: 10px; }
+                .receipt-title { font-size: 18px; color: #666; }
+                .section { margin-bottom: 25px; }
+                .section-title { font-size: 16px; font-weight: bold; border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-bottom: 15px; }
+                .info-row { display: flex; justify-content: space-between; margin-bottom: 8px; }
+                .label { font-weight: 500; }
+                .value { font-weight: normal; }
+                .highlight { background-color: #f8f9fa; padding: 15px; border-radius: 5px; border-left: 4px solid #2b6777; }
+                .weight-diff { font-weight: bold; color: ${weightDiff > 0 ? '#28a745' : (weightDiff < 0 ? '#dc3545' : '#666')}; }
+                .footer { margin-top: 40px; text-align: center; font-size: 12px; color: #666; border-top: 1px solid #ccc; padding-top: 20px; }
+                @media print { body { margin: 0; } }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <div class="company-name">WAREHOUSE MANAGEMENT SYSTEM</div>
+                <div class="receipt-title">Goods Out Receipt</div>
+            </div>
+            
+            <div class="section">
+                <div class="section-title">Shipment Information</div>
+                <div class="info-row">
+                    <span class="label">Out ID:</span>
+                    <span class="value">${goodsOutData.out_id}</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Date:</span>
+                    <span class="value">${formatDate(goodsOutData.created_at)}</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Loader:</span>
+                    <span class="value">${goodsOutData.loader}</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Company:</span>
+                    <span class="value">${goodsOutData.company || 'N/A'}</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Created by:</span>
+                    <span class="value">${goodsOutData.created_by}</span>
+                </div>
+            </div>
+            
+            <div class="section highlight">
+                <div class="section-title">Weight Information</div>
+                <div class="info-row">
+                    <span class="label">Original Weight:</span>
+                    <span class="value">${(goodsOutData.weight || 0).toLocaleString()} kg</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Delivered Weight:</span>
+                    <span class="value">${(goodsOutData.delivered_weight || 0).toLocaleString()} kg</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Weight Difference:</span>
+                    <span class="value weight-diff">${weightDiffFormatted}</span>
+                </div>
+            </div>
+            
+            <div class="section">
+                <div class="section-title">Transport Information</div>
+                <div class="info-row">
+                    <span class="label">Truck Number:</span>
+                    <span class="value">${goodsOutData.truck_no}</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Driver Number:</span>
+                    <span class="value">${goodsOutData.driver_no}</span>
+                </div>
+            </div>
+            
+            <div class="footer">
+                <p>This is a computer-generated receipt.</p>
+                <p>Printed on: ${new Date().toLocaleString()}</p>
+            </div>
+        </body>
+        </html>
+    `;
+    
+    // Open print window
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+    
+    // Print after content loads
+    printWindow.onload = () => {
+        printWindow.print();
+        printWindow.close();
+    };
 }

@@ -579,6 +579,44 @@ tr:hover {
     font-size: 12px;
 }
 
+/* Print Button Styling */
+.print-btn {
+    background-color: #52ab98;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 6px 12px;
+    cursor: pointer;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.2s ease;
+    min-width: 60px;
+    justify-content: center;
+}
+
+.print-btn:hover {
+    background-color: #2b6777;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.print-btn i {
+    font-size: 12px;
+}
+
+/* Fallback when Font Awesome doesn't load */
+.print-btn i:not(.fa):before,
+.print-btn i.fa:not(.fas):before {
+    content: '';
+    display: none;
+}
+
+.print-btn span {
+    font-weight: 500;
+}
+
 /* Payment Button Styling */
 .pay-btn {
     background-color: #52ab98;
@@ -624,8 +662,8 @@ tr:hover {
 th:last-child,
 td:last-child {
     text-align: center;
-    width: 120px;
-    min-width: 120px;
+    width: 180px;
+    min-width: 180px;
 }
 
 /* Forms */
