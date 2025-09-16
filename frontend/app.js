@@ -142,9 +142,11 @@ function showConfirmMessage(message, onConfirm, onCancel, title = 'Confirm') {
 // Authentication state management
 let currentUser = null;
 let currentGoodsData = []; // Store all goods data for pagination
+let currentGoodsOutData = []; // Store all goods out data for pagination
 let currentPage = 1;
 let rowsPerPage = 7;
 let filteredData = []; // Store filtered data for pagination
+let filteredGoodsOutData = []; // Store filtered goods out data for pagination
 
 // Check authentication status
 async function checkAuthentication() {
@@ -316,10 +318,22 @@ function setupEventListeners() {
         btn.addEventListener('click', openGoodsInModal);
     });
     
+    // Add Goods Out button event listeners (multiple buttons)
+    const addGoodsOutBtns = document.querySelectorAll('.add-goods-out-btn');
+    addGoodsOutBtns.forEach(btn => {
+        btn.addEventListener('click', openGoodsOutModal);
+    });
+    
     // Modal close button event listener
     const closeBtn = document.querySelector('.close');
     if (closeBtn) {
         closeBtn.addEventListener('click', closeGoodsInModal);
+    }
+    
+    // Goods Out modal close button event listener
+    const goodsOutCloseBtn = document.querySelector('#goodsOutModal .close');
+    if (goodsOutCloseBtn) {
+        goodsOutCloseBtn.addEventListener('click', closeGoodsOutModal);
     }
     
     // Modal cancel button event listener
@@ -328,10 +342,22 @@ function setupEventListeners() {
         cancelBtn.addEventListener('click', closeGoodsInModal);
     }
     
+    // Goods Out modal cancel button event listener
+    const cancelOutBtn = document.querySelector('.cancel-out-btn');
+    if (cancelOutBtn) {
+        cancelOutBtn.addEventListener('click', closeGoodsOutModal);
+    }
+    
     // Form submit event listener
     const goodsInForm = document.getElementById('goodsInForm');
     if (goodsInForm) {
         goodsInForm.addEventListener('submit', submitGoodsIn);
+    }
+    
+    // Goods Out form submit event listener
+    const goodsOutForm = document.getElementById('goodsOutForm');
+    if (goodsOutForm) {
+        goodsOutForm.addEventListener('submit', submitGoodsOut);
     }
     
     // View receipt buttons event listeners
@@ -346,6 +372,7 @@ function setupEventListeners() {
     
     // Search and filter functionality
     setupSearchAndFilter();
+    setupGoodsOutSearchAndFilter(); // Add goods out search and filter setup
     
     // Initialize pagination when data is loaded
     setupPagination();
@@ -557,6 +584,13 @@ document.querySelectorAll('.nav-btn').forEach(button => {
         // Show corresponding tab content
         const tabId = button.getAttribute('data-tab');
         document.getElementById(tabId).classList.add('active');
+        
+        // Load data based on active tab
+        if (tabId === 'goods-in') {
+            loadGoodsInData();
+        } else if (tabId === 'goods-out') {
+            loadGoodsOutData();
+        }
     });
 });
 
@@ -853,7 +887,7 @@ async function printItemDetails(inId, itemName, date) {
                             <span class="info-value">${formatDate(itemData.created_at)}</span>
                         </div>
                         <div class="info-row">
-                            <span class="info-label">Goods Name:</span>
+                            <span class="info-label">Name:</span>
                             <span class="info-value">${itemData.name}</span>
                         </div>
                         <div class="info-row">
@@ -1157,7 +1191,7 @@ function printGoodsReceipt(goodsData) {
                                 <span class="info-value">${formatDate(goodsData.created_at)}</span>
                             </div>
                             <div class="info-row">
-                                <span class="info-label">Goods Name:</span>
+                                <span class="info-label">Name:</span>
                                 <span class="info-value">${goodsData.name}</span>
                             </div>
                             <div class="info-row">
@@ -1527,6 +1561,18 @@ function closeGoodsInModal() {
     document.getElementById('goodsInForm').reset(); // Clear form
 }
 
+// Goods Out Modal Functions
+function openGoodsOutModal() {
+    document.getElementById('goodsOutModal').style.display = 'block';
+    document.body.style.overflow = 'hidden'; // Prevent background scrolling
+}
+
+function closeGoodsOutModal() {
+    document.getElementById('goodsOutModal').style.display = 'none';
+    document.body.style.overflow = 'auto'; // Restore scrolling
+    document.getElementById('goodsOutForm').reset(); // Clear form
+}
+
 // Submit Goods In Form
 async function submitGoodsIn(event) {
     event.preventDefault();
@@ -1641,11 +1687,158 @@ async function submitGoodsIn(event) {
     }
 }
 
+// Submit Goods Out Form
+async function submitGoodsOut(event) {
+    event.preventDefault();
+    
+    const formData = new FormData(event.target);
+    const goodsOutData = {
+        loader: formData.get('loader'),
+        company: formData.get('company'),
+        weight: parseFloat(formData.get('weight')),
+        truck_no: formData.get('truck_no'),
+        driver_no: formData.get('driver_no'),
+        delivered_weight: parseFloat(formData.get('delivered_weight'))
+    };
+    
+    // Validate required fields
+    if (!goodsOutData.loader || !goodsOutData.weight || !goodsOutData.truck_no || 
+        !goodsOutData.driver_no || !goodsOutData.delivered_weight) {
+        showErrorMessage('Please fill in all required fields.');
+        return;
+    }
+    
+    // Show loading state
+    const submitBtn = event.target.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+    submitBtn.disabled = true;
+    
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/goods-out`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include',
+            body: JSON.stringify(goodsOutData)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            const weightDiff = goodsOutData.delivered_weight - goodsOutData.weight;
+            const weightDiffText = weightDiff > 0 ? `+${weightDiff.toFixed(2)}` : weightDiff.toFixed(2);
+            const weightDiffColor = weightDiff > 0 ? '#28a745' : (weightDiff < 0 ? '#dc3545' : '#6c757d');
+            const weightDiffIcon = weightDiff > 0 ? 'fas fa-arrow-up' : (weightDiff < 0 ? 'fas fa-arrow-down' : 'fas fa-equals');
+            
+            const successMessage = `
+                <div style="text-align: center; padding: 20px 0;">
+                    <div style="background: linear-gradient(135deg, #28a745, #20c997); color: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);">
+                        <i class="fas fa-truck-loading" style="font-size: 2.5em; margin-bottom: 10px; display: block;"></i>
+                        <h3 style="margin: 0 0 5px 0; font-size: 1.4em;">🎉 Goods Out Record Created Successfully!</h3>
+                        <p style="margin: 0; opacity: 0.9; font-size: 0.95em;">Your shipment has been logged and is ready for processing</p>
+                    </div>
+                    
+                    <div style="background: #f8f9fa; border-radius: 10px; padding: 20px; margin: 15px 0; border-left: 4px solid #28a745;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; text-align: left;">
+                            <div style="background: white; padding: 12px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                                <div style="color: #6c757d; font-size: 0.85em; margin-bottom: 4px;">📋 RECORD ID</div>
+                                <div style="font-weight: bold; color: #495057; font-family: monospace;">${result.data.out_id}</div>
+                            </div>
+                            <div style="background: white; padding: 12px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                                <div style="color: #6c757d; font-size: 0.85em; margin-bottom: 4px;">👤 LOADER</div>
+                                <div style="font-weight: bold; color: #495057;">${result.data.loader}</div>
+                            </div>
+                            <div style="background: white; padding: 12px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                                <div style="color: #6c757d; font-size: 0.85em; margin-bottom: 4px;">⚖️ ORIGINAL WEIGHT</div>
+                                <div style="font-weight: bold; color: #495057;">${result.data.weight.toLocaleString()} kg</div>
+                            </div>
+                            <div style="background: white; padding: 12px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                                <div style="color: #6c757d; font-size: 0.85em; margin-bottom: 4px;">📦 DELIVERED WEIGHT</div>
+                                <div style="font-weight: bold; color: #495057;">${result.data.delivered_weight.toLocaleString()} kg</div>
+                            </div>
+                            <div style="background: white; padding: 12px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                                <div style="color: #6c757d; font-size: 0.85em; margin-bottom: 4px;">🚛 TRUCK NUMBER</div>
+                                <div style="font-weight: bold; color: #495057;">${result.data.truck_no}</div>
+                            </div>
+                            <div style="background: white; padding: 12px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                                <div style="color: #6c757d; font-size: 0.85em; margin-bottom: 4px;">🚗 DRIVER NUMBER</div>
+                                <div style="font-weight: bold; color: #495057;">${result.data.driver_no}</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="background: linear-gradient(135deg, ${weightDiffColor}, ${weightDiffColor}dd); color: white; padding: 15px; border-radius: 10px; margin: 15px 0; box-shadow: 0 3px 10px rgba(0,0,0,0.2);">
+                        <div style="display: flex; align-items: center; justify-content: center; gap: 10px;">
+                            <i class="${weightDiffIcon}" style="font-size: 1.2em;"></i>
+                            <span style="font-weight: bold; font-size: 1.1em;">Weight Difference: ${weightDiffText} kg</span>
+                        </div>
+                        <div style="opacity: 0.9; font-size: 0.9em; margin-top: 5px;">
+                            ${weightDiff > 0 ? '✅ Delivered more than expected' : weightDiff < 0 ? '⚠️ Delivered less than expected' : '✅ Exact weight delivered'}
+                        </div>
+                    </div>
+                    
+                    <div style="background: #e3f2fd; padding: 12px; border-radius: 8px; margin-top: 15px; border-left: 4px solid #2196f3;">
+                        <div style="color: #1976d2; font-size: 0.9em; display: flex; align-items: center; gap: 8px;">
+                            <i class="fas fa-search" style="font-size: 1em;"></i>
+                            <span><strong>Quick Tip:</strong> Use ID <code style="background: white; padding: 2px 6px; border-radius: 4px; color: #495057; font-family: monospace;">${result.data.out_id}</code> to search for this record</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            const actions = [
+                {
+                    text: '🎯 View Records',
+                    class: 'btn-secondary',
+                    icon: 'fas fa-list',
+                    action: () => {
+                        document.querySelector('.message-modal').remove();
+                        // Switch to goods out tab if not already there
+                        const goodsOutTab = document.querySelector('[data-tab="goods-out"]');
+                        if (goodsOutTab && !goodsOutTab.classList.contains('active')) {
+                            goodsOutTab.click();
+                        }
+                    }
+                },
+                {
+                    text: '✅ Perfect!',
+                    class: 'btn-primary',
+                    action: () => document.querySelector('.message-modal').remove()
+                }
+            ];
+            
+            showModalMessage(successMessage, 'success', 'Success', actions);
+            
+            // Reset form and close modal
+            closeGoodsOutModal();
+            
+            // Reload data to show new record
+            await loadGoodsOutData();
+            await loadDashboardStats();
+        } else {
+            showErrorMessage(result.message || 'Failed to save goods out record.');
+        }
+    } catch (error) {
+        console.error('Error submitting goods out data:', error);
+        showErrorMessage('An error occurred while saving the record.');
+    } finally {
+        // Restore button state
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    }
+}
+
 // Close modal when clicking outside
 window.addEventListener('click', function(event) {
     const modal = document.getElementById('goodsInModal');
+    const goodsOutModal = document.getElementById('goodsOutModal');
     if (event.target === modal) {
         closeGoodsInModal();
+    }
+    if (event.target === goodsOutModal) {
+        closeGoodsOutModal();
     }
 });
 
@@ -2364,7 +2557,7 @@ function renderTablePage() {
             <tr>
                 <td colspan="10" style="text-align: center; padding: 40px; color: #666;">
                     <i class="fas fa-box-open" style="font-size: 24px; margin-bottom: 10px; display: block;"></i>
-                    No goods in records found.
+                    No transaction in records found.
                 </td>
             </tr>
         `;
@@ -2494,4 +2687,246 @@ function formatDate(isoDateString) {
 function setupPagination() {
     // Pagination functionality is handled by updatePaginationControls()
     // This function is called when data is loaded
+}
+
+// Load goods out data
+async function loadGoodsOutData() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/goods-out`, {
+            method: 'GET',
+            credentials: 'include'
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            if (result.success) {
+                updateGoodsOutTable(result.data);
+            }
+        } else {
+            console.error('Failed to load goods out data');
+        }
+    } catch (error) {
+        console.error('Error loading goods out data:', error);
+    }
+}
+
+// Update goods out table with real data
+function updateGoodsOutTable(data) {
+    const tbody = document.querySelector('#goods-out tbody');
+    if (!tbody) return;
+    
+    // Store data globally for pagination and sort by created_at (newest first)
+    currentGoodsOutData = data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    filteredGoodsOutData = currentGoodsOutData; // Initially, filtered data is same as all data
+    currentPage = 1; // Reset to first page
+    
+    renderGoodsOutTablePage();
+    updateGoodsOutPaginationControls();
+}
+
+// Render current page of goods out table data
+function renderGoodsOutTablePage() {
+    const tbody = document.querySelector('#goods-out tbody');
+    if (!tbody) return;
+    
+    // Clear existing rows
+    tbody.innerHTML = '';
+    
+    if (filteredGoodsOutData.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="5" style="text-align: center; padding: 40px; color: #666;">
+                    <i class="fas fa-truck-loading" style="font-size: 24px; margin-bottom: 10px; display: block;"></i>
+                    No goods out records found.
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    // Calculate pagination
+    const startIndex = (currentPage - 1) * rowsPerPage;
+    const endIndex = startIndex + rowsPerPage;
+    const pageData = filteredGoodsOutData.slice(startIndex, endIndex);
+    
+    // Render table rows
+    pageData.forEach(item => {
+        const row = document.createElement('tr');
+        const formattedDate = formatDate(item.created_at);
+        
+        // Store out_id as data attribute for reference
+        row.setAttribute('data-out-id', item.out_id);
+        
+        row.innerHTML = `
+            <td>${formattedDate}</td>
+            <td>${item.loader}</td>
+            <td>${item.weight.toLocaleString()}</td>
+            <td>${item.truck_no}</td>
+            <td>${item.driver_no}</td>
+        `;
+        
+        tbody.appendChild(row);
+    });
+}
+
+// Update goods out pagination controls
+function updateGoodsOutPaginationControls() {
+    const paginationContainer = document.querySelector('#goods-out .pagination');
+    if (!paginationContainer) return;
+    
+    // Calculate pagination info
+    const totalRecords = filteredGoodsOutData.length;
+    const totalPages = Math.ceil(totalRecords / rowsPerPage);
+    
+    // Clear existing pagination
+    paginationContainer.innerHTML = '';
+    
+    if (totalPages <= 1) return; // Don't show pagination if only one page
+    
+    // Previous button
+    const prevBtn = document.createElement('button');
+    prevBtn.className = 'pagination-btn';
+    prevBtn.innerHTML = '<i class="fas fa-chevron-left"></i>';
+    prevBtn.disabled = currentPage === 1;
+    prevBtn.addEventListener('click', () => {
+        if (currentPage > 1) {
+            currentPage--;
+            renderGoodsOutTablePage();
+            updateGoodsOutPaginationControls();
+        }
+    });
+    paginationContainer.appendChild(prevBtn);
+    
+    // Page numbers
+    const startPage = Math.max(1, currentPage - 2);
+    const endPage = Math.min(totalPages, startPage + 4);
+    
+    for (let i = startPage; i <= endPage; i++) {
+        const pageBtn = document.createElement('button');
+        pageBtn.className = `pagination-btn ${i === currentPage ? 'active' : ''}`;
+        pageBtn.textContent = i;
+        pageBtn.addEventListener('click', () => {
+            currentPage = i;
+            renderGoodsOutTablePage();
+            updateGoodsOutPaginationControls();
+        });
+        paginationContainer.appendChild(pageBtn);
+    }
+    
+    // Next button
+    const nextBtn = document.createElement('button');
+    nextBtn.className = 'pagination-btn';
+    nextBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
+    nextBtn.disabled = currentPage === totalPages;
+    nextBtn.addEventListener('click', () => {
+        if (currentPage < totalPages) {
+            currentPage++;
+            renderGoodsOutTablePage();
+            updateGoodsOutPaginationControls();
+        }
+    });
+    paginationContainer.appendChild(nextBtn);
+    
+    // Add page info
+    const startRecord = Math.min((currentPage - 1) * rowsPerPage + 1, totalRecords);
+    const endRecord = Math.min(currentPage * rowsPerPage, totalRecords);
+    const pageInfo = document.createElement('div');
+    pageInfo.className = 'pagination-info';
+    pageInfo.textContent = `Showing ${startRecord}-${endRecord} of ${totalRecords} records`;
+    paginationContainer.appendChild(pageInfo);
+}
+
+// Goods out search and filter functionality
+function setupGoodsOutSearchAndFilter() {
+    const searchInput = document.getElementById('goods-out-search');
+    const startDateInput = document.getElementById('out-start-date');
+    const endDateInput = document.getElementById('out-end-date');
+    const clearFiltersBtn = document.getElementById('clear-out-filters');
+    
+    if (searchInput) {
+        searchInput.addEventListener('input', filterGoodsOutTable);
+    }
+    
+    if (startDateInput) {
+        startDateInput.addEventListener('change', filterGoodsOutTable);
+    }
+    
+    if (endDateInput) {
+        endDateInput.addEventListener('change', filterGoodsOutTable);
+    }
+    
+    if (clearFiltersBtn) {
+        clearFiltersBtn.addEventListener('click', clearGoodsOutFilters);
+    }
+}
+
+// Filter goods out table
+function filterGoodsOutTable() {
+    const searchTerm = document.getElementById('goods-out-search')?.value.toLowerCase() || '';
+    const startDate = document.getElementById('out-start-date')?.value || '';
+    const endDate = document.getElementById('out-end-date')?.value || '';
+    
+    // Filter the data
+    filteredGoodsOutData = currentGoodsOutData.filter(item => {
+        // Search filter
+        const matchesSearch = !searchTerm || 
+            item.out_id.toLowerCase().includes(searchTerm) ||
+            item.loader.toLowerCase().includes(searchTerm) ||
+            (item.company && item.company.toLowerCase().includes(searchTerm)) ||
+            item.truck_no.toLowerCase().includes(searchTerm) ||
+            item.driver_no.toLowerCase().includes(searchTerm) ||
+            item.weight.toString().includes(searchTerm) ||
+            item.delivered_weight.toString().includes(searchTerm);
+        
+        // Date filter
+        let matchesDate = true;
+        if (startDate || endDate) {
+            const itemDate = formatDateForComparison(item.created_at);
+            if (itemDate) {
+                if (startDate && itemDate < startDate) {
+                    matchesDate = false;
+                }
+                if (endDate && itemDate > endDate) {
+                    matchesDate = false;
+                }
+            }
+        }
+        
+        return matchesSearch && matchesDate;
+    });
+    
+    // Reset to first page when filtering
+    currentPage = 1;
+    
+    // Re-render table and pagination
+    renderGoodsOutTablePage();
+    updateGoodsOutPaginationControls();
+}
+
+// Clear goods out filters
+function clearGoodsOutFilters() {
+    // Clear search input
+    const searchInput = document.getElementById('goods-out-search');
+    if (searchInput) {
+        searchInput.value = '';
+    }
+    
+    // Clear date inputs
+    const startDateInput = document.getElementById('out-start-date');
+    if (startDateInput) {
+        startDateInput.value = '';
+    }
+    
+    const endDateInput = document.getElementById('out-end-date');
+    if (endDateInput) {
+        endDateInput.value = '';
+    }
+    
+    // Reset filtered data to all data
+    filteredGoodsOutData = currentGoodsOutData;
+    currentPage = 1;
+    
+    // Re-render table and pagination
+    renderGoodsOutTablePage();
+    updateGoodsOutPaginationControls();
 }

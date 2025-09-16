@@ -9,6 +9,7 @@ const { google } = require('googleapis');
 const registerRoutes = require('./register');
 const authRoutes = require('./auth'); // Import new auth routes
 const goodsRoutes = require('./goods'); // Import goods routes
+const goodsOutRoutes = require('./goodsout'); // Import goods out routes
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -109,6 +110,7 @@ app.get('/api/health', (req, res) => {
 app.use('/api/auth', registerRoutes);
 app.use('/api/auth', authRoutes); // Use new auth routes
 app.use('/api', goodsRoutes); // Use goods routes
+app.use('/api', goodsOutRoutes); // Use goods out routes
 
 // Error handling middleware
 app.use((err, req, res, next) => {
