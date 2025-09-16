@@ -208,9 +208,21 @@ header {
 /* Dashboard Metrics */
 .metrics-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 15px;
     margin-bottom: 20px;
+}
+
+@media (max-width: 768px) {
+    .metrics-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    .metrics-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
 .metric-card {
@@ -261,6 +273,23 @@ header {
 .date-btn.active {
     background-color: var(--primary);
     color: white;
+}
+
+/* Custom date inputs for dashboard */
+.custom-date-inputs {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+}
+
+.custom-date-inputs .date-input-group {
+    margin-bottom: 0;
+}
+
+.custom-date-inputs .btn {
+    margin-left: 10px;
+    align-self: end;
 }
 
 /* Quick Actions */
@@ -676,11 +705,17 @@ td:last-child {
 
 @media (min-width: 768px) {
     .metrics-grid {
-        grid-template-columns: repeat(4, 1fr);
+        grid-template-columns: repeat(3, 1fr);
     }
     
     .settings-grid {
         grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (min-width: 1024px) {
+    .metrics-grid {
+        grid-template-columns: repeat(5, 1fr);
     }
 }
 

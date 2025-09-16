@@ -541,6 +541,126 @@ router.get('/payments/:in_id', requireAuth, async (req, res) => {
   }
 });
 
+// Get dashboard statistics with optional date filtering
+router.get('/dashboard-stats', requireAuth, async (req, res) => {
+  try {
+    const { start_date, end_date } = req.query;
+    console.log(`[GET /dashboard-stats] Request from user: ${req.user.username}`);
+    console.log(`[GET /dashboard-stats] Date range: ${start_date} to ${end_date}`);
+    
+    // Parse dates if provided
+    let startDate = null;
+    let endDate = null;
+    
+    if (start_date) {
+      startDate = new Date(start_date);
+      startDate.setHours(0, 0, 0, 0); // Start of day
+    }
+    
+    if (end_date) {
+      endDate = new Date(end_date);
+      endDate.setHours(23, 59, 59, 999); // End of day
+    }
+    
+    // Fetch data from all relevant sheets
+    const [inResponse, outResponse, inPaymentResponse, outPaymentResponse] = await Promise.all([
+      sheets.spreadsheets.values.get({
+        spreadsheetId: SPREADSHEET_ID,
+        range: 'in!A:K',
+      }),
+      sheets.spreadsheets.values.get({
+        spreadsheetId: SPREADSHEET_ID,
+        range: 'out!A:K',
+      }).catch(() => ({ data: { values: [] } })), // Handle if sheet doesn't exist
+      sheets.spreadsheets.values.get({
+        spreadsheetId: SPREADSHEET_ID,
+        range: 'in_payment!A:E',
+      }),
+      sheets.spreadsheets.values.get({
+        spreadsheetId: SPREADSHEET_ID,
+        range: 'out_payment!A:E',
+      }).catch(() => ({ data: { values: [] } })) // Handle if sheet doesn't exist
+    ]);
+    
+    // Helper function to filter rows by date
+    const filterByDate = (rows, dateColumnIndex) => {
+      if (!startDate && !endDate) return rows;
+      
+      return rows.filter(row => {
+        const dateStr = row[dateColumnIndex];
+        if (!dateStr) return false;
+        
+        const rowDate = new Date(dateStr);
+        if (isNaN(rowDate.getTime())) return false;
+        
+        if (startDate && rowDate < startDate) return false;
+        if (endDate && rowDate > endDate) return false;
+        
+        return true;
+      });
+    };
+    
+    // Process in sheet data (weight and created_at)
+    const inRows = inResponse.data.values || [];
+    const filteredInRows = inRows.length > 1 ? filterByDate(inRows.slice(1), 9) : []; // created_at is column 9 (index 9)
+    
+    // Process out sheet data (weight and created_at)
+    const outRows = outResponse.data.values || [];
+    const filteredOutRows = outRows.length > 1 ? filterByDate(outRows.slice(1), 9) : []; // created_at is column 9
+    
+    // Process in_payment data (paid_amount and created_at)
+    const inPaymentRows = inPaymentResponse.data.values || [];
+    const filteredInPaymentRows = inPaymentRows.length > 1 ? filterByDate(inPaymentRows.slice(1), 3) : []; // created_at is column 3
+    
+    // Process out_payment data (paid_amount and created_at)
+    const outPaymentRows = outPaymentResponse.data.values || [];
+    const filteredOutPaymentRows = outPaymentRows.length > 1 ? filterByDate(outPaymentRows.slice(1), 3) : []; // created_at is column 3
+    
+    // Calculate statistics
+    const totalWeightIn = filteredInRows.reduce((sum, row) => {
+      const weight = parseFloat(row[2]) || 0; // weight is column 2
+      return sum + weight;
+    }, 0);
+    
+    const totalWeightOut = filteredOutRows.reduce((sum, row) => {
+      const weight = parseFloat(row[2]) || 0; // weight is column 2
+      return sum + weight;
+    }, 0);
+    
+    const amountPaid = filteredInPaymentRows.reduce((sum, row) => {
+      const paid = parseFloat(row[2]) || 0; // paid_amount is column 2
+      return sum + paid;
+    }, 0);
+    
+    const amountGenerated = filteredOutPaymentRows.reduce((sum, row) => {
+      const paid = parseFloat(row[2]) || 0; // paid_amount is column 2
+      return sum + paid;
+    }, 0);
+    
+    const profit = amountGenerated - amountPaid;
+    
+    console.log(`[GET /dashboard-stats] Calculated stats - Weight In: ${totalWeightIn}, Weight Out: ${totalWeightOut}, Paid: ${amountPaid}, Generated: ${amountGenerated}, Profit: ${profit}`);
+    
+    res.json({
+      success: true,
+      data: {
+        totalWeightIn,
+        totalWeightOut,
+        amountPaid,
+        amountGenerated,
+        profit
+      }
+    });
+    
+  } catch (error) {
+    console.error('[GET /dashboard-stats] Error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch dashboard statistics'
+    });
+  }
+});
+
 // Test endpoint to check price_per_kg sheet access
 router.get('/test-price-sheet', requireAuth, async (req, res) => {
   try {

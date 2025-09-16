@@ -60,29 +60,36 @@
                         <div class="metric-icon">
                             <i class="fas fa-weight"></i>
                         </div>
-                        <div class="metric-value">12,458 kg</div>
+                        <div class="metric-value" id="total-weight-in">0 kg</div>
                         <div class="metric-label">Total Weight In</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon">
+                            <i class="fas fa-truck-loading"></i>
+                        </div>
+                        <div class="metric-value" id="total-weight-out">0 kg</div>
+                        <div class="metric-label">Total Weight Out</div>
                     </div>
                     <div class="metric-card">
                         <div class="metric-icon">
                             <i class="fas fa-money-bill-wave"></i>
                         </div>
-                        <div class="metric-value">₦86,540</div>
+                        <div class="metric-value" id="amount-paid">₦0</div>
                         <div class="metric-label">Amount Paid</div>
                     </div>
                     <div class="metric-card">
                         <div class="metric-icon">
                             <i class="fas fa-hand-holding-usd"></i>
                         </div>
-                        <div class="metric-value">₦12,350</div>
-                        <div class="metric-label">Amount Due</div>
+                        <div class="metric-value" id="amount-generated">₦0</div>
+                        <div class="metric-label">Amount Generated</div>
                     </div>
                     <div class="metric-card">
                         <div class="metric-icon">
-                            <i class="fas fa-calculator"></i>
+                            <i class="fas fa-chart-line"></i>
                         </div>
-                        <div class="metric-value">₦98,890</div>
-                        <div class="metric-label">Total Amount</div>
+                        <div class="metric-value" id="profit">₦0</div>
+                        <div class="metric-label">Profit</div>
                     </div>
                 </div>
 
@@ -92,10 +99,25 @@
                         Date Range Filter
                     </div>
                     <div class="date-filter">
-                        <button class="date-btn active">Today</button>
-                        <button class="date-btn">This Week</button>
-                        <button class="date-btn">This Month</button>
-                        <button class="date-btn">Custom Range</button>
+                        <button class="date-btn active" data-range="today">Today</button>
+                        <button class="date-btn" data-range="week">This Week</button>
+                        <button class="date-btn" data-range="month">This Month</button>
+                        <button class="date-btn" data-range="custom">Custom Range</button>
+                    </div>
+                    <div class="custom-date-inputs" id="custom-date-inputs" style="display: none; margin-top: 15px;">
+                        <div style="display: flex; gap: 15px; align-items: center;">
+                            <div class="date-input-group">
+                                <label for="dashboard-start-date">From:</label>
+                                <input type="date" id="dashboard-start-date" class="date-input">
+                            </div>
+                            <div class="date-input-group">
+                                <label for="dashboard-end-date">To:</label>
+                                <input type="date" id="dashboard-end-date" class="date-input">
+                            </div>
+                            <button type="button" id="apply-custom-filter" class="btn btn-primary" style="padding: 8px 15px; font-size: 13px;">
+                                <i class="fas fa-filter"></i> Apply
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -105,7 +127,7 @@
                         Quick Actions
                     </div>
                     <div class="quick-actions">
-                        <button class="action-btn primary">
+                        <button class="action-btn primary add-goods-btn">
                             <i class="fas fa-plus-circle"></i>
                             Add Goods In
                         </button>

@@ -232,7 +232,8 @@ window.addEventListener('load', async function() {
     if (isAuthenticated) {
         setupLogoutHandler();
         setupEventListeners();
-        await loadDashboardData(); // Load dashboard data
+        setupDashboardDateFilter(); // Setup dashboard date filtering
+        await loadDashboardStats(); // Load dashboard statistics
         await loadGoodsInData(); // Load goods in data
         console.log('User authenticated successfully');
     }
@@ -250,11 +251,11 @@ function setupEventListeners() {
         });
     }
     
-    // Add Goods In button event listener
-    const addGoodsBtn = document.querySelector('.add-goods-btn');
-    if (addGoodsBtn) {
-        addGoodsBtn.addEventListener('click', openGoodsInModal);
-    }
+    // Add Goods In button event listeners (multiple buttons)
+    const addGoodsBtns = document.querySelectorAll('.add-goods-btn');
+    addGoodsBtns.forEach(btn => {
+        btn.addEventListener('click', openGoodsInModal);
+    });
     
     // Modal close button event listener
     const closeBtn = document.querySelector('.close');
@@ -1313,7 +1314,7 @@ async function submitPayment(inId, amount, modal) {
             
             // Reload data to show updated status
             await loadGoodsInData();
-            await loadDashboardData();
+            await loadDashboardStats();
         } else {
             showErrorMessage(result.message || 'Failed to record payment.');
         }
@@ -1567,7 +1568,7 @@ async function submitGoodsIn(event) {
             
             // Reload data to show new record
             await loadGoodsInData();
-            await loadDashboardData();
+            await loadDashboardStats();
         } else {
             showErrorMessage(result.message || 'Failed to save goods record.');
         }
@@ -1590,6 +1591,216 @@ window.addEventListener('click', function(event) {
 });
 
 // Data Loading Functions
+
+// Date filter state for dashboard
+let currentDateFilter = {
+    type: 'today',
+    startDate: null,
+    endDate: null
+};
+
+// Load dashboard summary data
+async function loadDashboardData() {
+    await loadDashboardStats();
+}
+
+// Load dashboard statistics with date filtering
+async function loadDashboardStats() {
+    try {
+        // Build query parameters based on current filter
+        const params = new URLSearchParams();
+        
+        if (currentDateFilter.startDate) {
+            params.append('start_date', currentDateFilter.startDate);
+        }
+        
+        if (currentDateFilter.endDate) {
+            params.append('end_date', currentDateFilter.endDate);
+        }
+        
+        const url = `${API_BASE_URL}/api/dashboard-stats${params.toString() ? '?' + params.toString() : ''}`;
+        console.log('Loading dashboard stats from:', url);
+        
+        const response = await fetch(url, {
+            method: 'GET',
+            credentials: 'include'
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            if (result.success) {
+                updateDashboardStatCards(result.data);
+            } else {
+                console.error('Failed to load dashboard stats:', result.message);
+            }
+        } else {
+            console.error('Failed to load dashboard stats - HTTP error:', response.status);
+        }
+    } catch (error) {
+        console.error('Error loading dashboard stats:', error);
+    }
+}
+
+// Update dashboard stat cards with real data
+function updateDashboardStatCards(data) {
+    // Update Total Weight In
+    const weightInElement = document.getElementById('total-weight-in');
+    if (weightInElement) {
+        weightInElement.textContent = `${data.totalWeightIn.toLocaleString()} kg`;
+    }
+    
+    // Update Total Weight Out
+    const weightOutElement = document.getElementById('total-weight-out');
+    if (weightOutElement) {
+        weightOutElement.textContent = `${data.totalWeightOut.toLocaleString()} kg`;
+    }
+    
+    // Update Amount Paid
+    const amountPaidElement = document.getElementById('amount-paid');
+    if (amountPaidElement) {
+        amountPaidElement.textContent = `₦${data.amountPaid.toLocaleString()}`;
+    }
+    
+    // Update Amount Generated
+    const amountGeneratedElement = document.getElementById('amount-generated');
+    if (amountGeneratedElement) {
+        amountGeneratedElement.textContent = `₦${data.amountGenerated.toLocaleString()}`;
+    }
+    
+    // Update Profit (with color coding)
+    const profitElement = document.getElementById('profit');
+    if (profitElement) {
+        profitElement.textContent = `₦${data.profit.toLocaleString()}`;
+        // Add color coding for profit
+        if (data.profit > 0) {
+            profitElement.style.color = '#28a745'; // Green for positive profit
+        } else if (data.profit < 0) {
+            profitElement.style.color = '#dc3545'; // Red for loss
+        } else {
+            profitElement.style.color = '#6c757d'; // Gray for break-even
+        }
+    }
+}
+
+// Helper function to get date range based on filter type
+function getDateRange(filterType) {
+    const today = new Date();
+    const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const endOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999);
+    
+    switch (filterType) {
+        case 'today':
+            return {
+                startDate: startOfToday.toISOString().split('T')[0],
+                endDate: endOfToday.toISOString().split('T')[0]
+            };
+            
+        case 'week':
+            const startOfWeek = new Date(today);
+            startOfWeek.setDate(today.getDate() - today.getDay()); // Start of week (Sunday)
+            startOfWeek.setHours(0, 0, 0, 0);
+            
+            const endOfWeek = new Date(startOfWeek);
+            endOfWeek.setDate(startOfWeek.getDate() + 6); // End of week (Saturday)
+            endOfWeek.setHours(23, 59, 59, 999);
+            
+            return {
+                startDate: startOfWeek.toISOString().split('T')[0],
+                endDate: endOfWeek.toISOString().split('T')[0]
+            };
+            
+        case 'month':
+            const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+            const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59, 999);
+            
+            return {
+                startDate: startOfMonth.toISOString().split('T')[0],
+                endDate: endOfMonth.toISOString().split('T')[0]
+            };
+            
+        default:
+            return {
+                startDate: null,
+                endDate: null
+            };
+    }
+}
+
+// Setup dashboard date filter event listeners
+function setupDashboardDateFilter() {
+    // Date filter buttons
+    const dateButtons = document.querySelectorAll('.date-btn');
+    dateButtons.forEach(button => {
+        button.addEventListener('click', async () => {
+            // Remove active class from all buttons
+            dateButtons.forEach(btn => btn.classList.remove('active'));
+            // Add active class to clicked button
+            button.classList.add('active');
+            
+            const filterType = button.getAttribute('data-range');
+            
+            if (filterType === 'custom') {
+                // Show custom date inputs
+                const customInputs = document.getElementById('custom-date-inputs');
+                if (customInputs) {
+                    customInputs.style.display = 'block';
+                }
+                // Don't update filter yet, wait for Apply button
+                return;
+            } else {
+                // Hide custom date inputs
+                const customInputs = document.getElementById('custom-date-inputs');
+                if (customInputs) {
+                    customInputs.style.display = 'none';
+                }
+                
+                // Update filter and reload data
+                const dateRange = getDateRange(filterType);
+                currentDateFilter = {
+                    type: filterType,
+                    startDate: dateRange.startDate,
+                    endDate: dateRange.endDate
+                };
+                
+                await loadDashboardStats();
+            }
+        });
+    });
+    
+    // Apply custom filter button
+    const applyCustomBtn = document.getElementById('apply-custom-filter');
+    if (applyCustomBtn) {
+        applyCustomBtn.addEventListener('click', async () => {
+            const startDateInput = document.getElementById('dashboard-start-date');
+            const endDateInput = document.getElementById('dashboard-end-date');
+            
+            const startDate = startDateInput ? startDateInput.value : null;
+            const endDate = endDateInput ? endDateInput.value : null;
+            
+            if (!startDate && !endDate) {
+                showWarningMessage('Please select at least one date.');
+                return;
+            }
+            
+            // Update filter and reload data
+            currentDateFilter = {
+                type: 'custom',
+                startDate: startDate,
+                endDate: endDate
+            };
+            
+            await loadDashboardStats();
+        });
+    }
+    
+    // Initialize with today's filter
+    const todayRange = getDateRange('today');
+    currentDateFilter = {
+        type: 'today',
+        startDate: todayRange.startDate,
+        endDate: todayRange.endDate
+    };
+}
 
 // Load dashboard summary data
 async function loadDashboardData() {
