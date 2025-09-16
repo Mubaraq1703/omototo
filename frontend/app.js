@@ -420,7 +420,7 @@ function openPaymentModal(inId, totalAmount, paidAmount) {
         <div class="modal-content">
             <div class="modal-header">
                 <h2><i class="fas fa-credit-card"></i> Make Payment</h2>
-                <span class="close" onclick="this.parentElement.parentElement.parentElement.remove()">&times;</span>
+                <span class="close">&times;</span>
             </div>
             <form id="paymentForm">
                 <div class="form-group">
@@ -438,7 +438,7 @@ function openPaymentModal(inId, totalAmount, paidAmount) {
                            placeholder="Enter amount to pay" step="0.01" min="0.01" max="${remaining * 2}">
                 </div>
                 <div class="form-actions">
-                    <button type="button" class="btn btn-secondary" onclick="this.closest('.modal').remove()">Cancel</button>
+                    <button type="button" class="btn btn-secondary cancel-payment-btn">Cancel</button>
                     <button type="submit" class="btn btn-primary">
                         <i class="fas fa-credit-card"></i> Make Payment
                     </button>
@@ -448,6 +448,25 @@ function openPaymentModal(inId, totalAmount, paidAmount) {
     `;
     
     document.body.appendChild(modal);
+    
+    // Add event listeners for closing modal
+    const closeBtn = modal.querySelector('.close');
+    const cancelBtn = modal.querySelector('.cancel-payment-btn');
+    
+    closeBtn.addEventListener('click', () => {
+        modal.remove();
+    });
+    
+    cancelBtn.addEventListener('click', () => {
+        modal.remove();
+    });
+    
+    // Close modal when clicking outside
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.remove();
+        }
+    });
     
     // Handle payment form submission
     const paymentForm = modal.querySelector('#paymentForm');
@@ -520,7 +539,7 @@ async function showItemDetailsModal(inId, date, itemName) {
         <div class="modal-content">
             <div class="modal-header">
                 <h2><i class="fas fa-eye"></i> Item Details</h2>
-                <span class="close" onclick="this.parentElement.parentElement.parentElement.remove()">&times;</span>
+                <span class="close">&times;</span>
             </div>
             <div style="padding: 20px;">
                 <h3>${itemName}</h3>
@@ -533,13 +552,32 @@ async function showItemDetailsModal(inId, date, itemName) {
                 </div>
                 
                 <div class="form-actions" style="margin-top: 20px;">
-                    <button type="button" class="btn btn-secondary" onclick="this.closest('.modal').remove()">Close</button>
+                    <button type="button" class="btn btn-secondary close-modal-btn">Close</button>
                 </div>
             </div>
         </div>
     `;
     
     document.body.appendChild(modal);
+    
+    // Add event listeners for closing modal
+    const closeBtn = modal.querySelector('.close');
+    const closeModalBtn = modal.querySelector('.close-modal-btn');
+    
+    closeBtn.addEventListener('click', () => {
+        modal.remove();
+    });
+    
+    closeModalBtn.addEventListener('click', () => {
+        modal.remove();
+    });
+    
+    // Close modal when clicking outside
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.remove();
+        }
+    });
     
     // Load payment history
     await loadPaymentHistory(inId, modal.querySelector('#payment-history'));
