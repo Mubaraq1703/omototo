@@ -196,7 +196,7 @@
                     <div class="table-controls">
                         <div class="search-container">
                             <i class="fas fa-search search-icon"></i>
-                            <input type="text" id="goods-search" placeholder="Search by name, account, or status..." class="search-input">
+                            <input type="text" id="goods-search" placeholder="Search by ID, name, account, or status..." class="search-input">
                         </div>
                         <div class="date-filter-container">
                             <div class="date-input-group">
@@ -500,94 +500,99 @@
                 <h2><i class="fas fa-box-open"></i> Add Goods In</h2>
                 <span class="close">&times;</span>
             </div>
-            <form id="goodsInForm">
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label for="goods-name">Name *</label>
-                        <input type="text" id="goods-name" name="name" required placeholder="Enter goods name">
+            <div class="modal-body">
+                <form id="goodsInForm">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="goods-name">Name *</label>
+                            <input type="text" id="goods-name" name="name" required placeholder="Enter goods name">
+                        </div>
+                        <div class="form-group">
+                            <label for="goods-weight">Weight (kg) *</label>
+                            <input type="number" id="goods-weight" name="weight" required placeholder="Enter weight" step="0.01" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="acct-no">Account Number *</label>
+                            <input type="text" id="acct-no" name="acct_no" required placeholder="Enter account number">
+                        </div>
+                        <div class="form-group">
+                            <label for="bank-name">Bank *</label>
+                            <input type="text" id="bank-name" name="bank" required placeholder="Select or type bank name" list="nigerian-banks">
+                            <datalist id="nigerian-banks">
+                                <option value="Access Bank">
+                                <option value="Citibank Nigeria">
+                                <option value="Ecobank Nigeria">
+                                <option value="Fidelity Bank">
+                                <option value="First Bank of Nigeria">
+                                <option value="First City Monument Bank (FCMB)">
+                                <option value="Guaranty Trust Bank (GTBank)">
+                                <option value="Heritage Bank">
+                                <option value="Keystone Bank">
+                                <option value="Polaris Bank">
+                                <option value="Providus Bank">
+                                <option value="Stanbic IBTC Bank">
+                                <option value="Standard Chartered Bank">
+                                <option value="Sterling Bank">
+                                <option value="SunTrust Bank">
+                                <option value="Union Bank of Nigeria">
+                                <option value="United Bank for Africa (UBA)">
+                                <option value="Unity Bank">
+                                <option value="Wema Bank">
+                                <option value="Zenith Bank">
+                                <option value="Jaiz Bank">
+                                <option value="Lotus Bank">
+                                <option value="TAJ Bank">
+                                <option value="Globus Bank">
+                                <option value="PremiumTrust Bank">
+                                <option value="Coronation Bank">
+                                <option value="Rand Merchant Bank">
+                                <option value="Citi Bank">
+                                <option value="TITAN Trust Bank">
+                                <option value="Parallex Bank">
+                                <option value="VFD Microfinance Bank">
+                                <option value="Moniepoint Microfinance Bank">
+                                <option value="Kuda Microfinance Bank">
+                                <option value="Carbon Microfinance Bank">
+                                <option value="Mint Finex MFB">
+                                <option value="Sparkle Microfinance Bank">
+                                <option value="NPF Microfinance Bank">
+                                <option value="LAPO Microfinance Bank">
+                                <option value="AB Microfinance Bank">
+                                <option value="Accion Microfinance Bank">
+                                <option value="CEMCS Microfinance Bank">
+                                <option value="Eyowo Microfinance Bank">
+                                <option value="9PSB (9 Payment Service Bank)">
+                                <option value="Opay Digital Services">
+                                <option value="PalmPay">
+                                <option value="FairMoney Microfinance Bank">
+                                <option value="Renmoney Microfinance Bank">
+                                <option value="Rubies Microfinance Bank">
+                                <option value="Page Microfinance Bank">
+                                <option value="GoMoney">
+                                <option value="Mayfair MFB">
+                                <option value="Bainescredit MFB">
+                            </datalist>
+                        </div>
+                        <div class="form-group">
+                            <label for="phone-no">Phone Number *</label>
+                            <input type="tel" id="phone-no" name="phone_no" required placeholder="Enter phone number">
+                        </div>
+                        <div class="form-group">
+                            <label for="paid-amount">Paid Amount</label>
+                            <input type="number" id="paid-amount" name="paid_amount" placeholder="Enter amount paid (optional)" step="0.01" min="0" value="0">
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label for="goods-weight">Weight (kg) *</label>
-                        <input type="number" id="goods-weight" name="weight" required placeholder="Enter weight" step="0.01" min="0">
+                    <div style="background: #e8f4f8; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid var(--primary);">
+                        <p style="margin: 0; font-size: 14px; color: var(--text-dark);"><i class="fas fa-info-circle" style="margin-right: 8px;"></i><strong>Note:</strong> The total amount will be calculated automatically based on weight and current market price. Paid Amount is optional - leave as 0 if no payment made yet.</p>
                     </div>
-                    <div class="form-group">
-                        <label for="acct-no">Account Number *</label>
-                        <input type="text" id="acct-no" name="acct_no" required placeholder="Enter account number">
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary cancel-btn">Cancel</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Save Goods In
+                        </button>
                     </div>
-                    <div class="form-group">
-                        <label for="bank-name">Bank *</label>
-                        <input type="text" id="bank-name" name="bank" required placeholder="Select or type bank name" list="nigerian-banks">
-                        <datalist id="nigerian-banks">
-                            <option value="Access Bank">
-                            <option value="Citibank Nigeria">
-                            <option value="Ecobank Nigeria">
-                            <option value="Fidelity Bank">
-                            <option value="First Bank of Nigeria">
-                            <option value="First City Monument Bank (FCMB)">
-                            <option value="Guaranty Trust Bank (GTBank)">
-                            <option value="Heritage Bank">
-                            <option value="Keystone Bank">
-                            <option value="Polaris Bank">
-                            <option value="Providus Bank">
-                            <option value="Stanbic IBTC Bank">
-                            <option value="Standard Chartered Bank">
-                            <option value="Sterling Bank">
-                            <option value="SunTrust Bank">
-                            <option value="Union Bank of Nigeria">
-                            <option value="United Bank for Africa (UBA)">
-                            <option value="Unity Bank">
-                            <option value="Wema Bank">
-                            <option value="Zenith Bank">
-                            <option value="Jaiz Bank">
-                            <option value="Lotus Bank">
-                            <option value="TAJ Bank">
-                            <option value="Globus Bank">
-                            <option value="PremiumTrust Bank">
-                            <option value="Coronation Bank">
-                            <option value="Rand Merchant Bank">
-                            <option value="Citi Bank">
-                            <option value="TITAN Trust Bank">
-                            <option value="Parallex Bank">
-                            <option value="VFD Microfinance Bank">
-                            <option value="Moniepoint Microfinance Bank">
-                            <option value="Kuda Microfinance Bank">
-                            <option value="Carbon Microfinance Bank">
-                            <option value="Mint Finex MFB">
-                            <option value="Sparkle Microfinance Bank">
-                            <option value="NPF Microfinance Bank">
-                            <option value="LAPO Microfinance Bank">
-                            <option value="AB Microfinance Bank">
-                            <option value="Accion Microfinance Bank">
-                            <option value="CEMCS Microfinance Bank">
-                            <option value="Eyowo Microfinance Bank">
-                            <option value="9PSB (9 Payment Service Bank)">
-                            <option value="Opay Digital Services">
-                            <option value="PalmPay">
-                            <option value="FairMoney Microfinance Bank">
-                            <option value="Renmoney Microfinance Bank">
-                            <option value="Rubies Microfinance Bank">
-                            <option value="Page Microfinance Bank">
-                            <option value="GoMoney">
-                            <option value="Mayfair MFB">
-                            <option value="Bainescredit MFB">
-                        </datalist>
-                    </div>
-                    <div class="form-group">
-                        <label for="phone-no">Phone Number *</label>
-                        <input type="tel" id="phone-no" name="phone_no" required placeholder="Enter phone number">
-                    </div>
-                    <div class="form-group">
-                        <label for="amount-paid">Amount Paid *</label>
-                        <input type="number" id="amount-paid" name="amount_paid" required placeholder="Enter amount paid" step="0.01" min="0">
-                    </div>
-                </div>
-                <div class="form-actions">
-                    <button type="button" class="btn btn-secondary cancel-btn">Cancel</button>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save"></i> Save Goods In
-                    </button>
-                </div>
-            </form>
+                </form>
+            </div>
         </div>
     </div>
 

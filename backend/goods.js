@@ -14,6 +14,7 @@ const sheets = google.sheets({ version: 'v4', auth });
 const SPREADSHEET_ID = process.env.GOOGLE_SHEET_ID_APP;
 const GOODS_IN_SHEET = 'in'; // Sheet name for goods in data
 const PAYMENT_SHEET = 'in_payment'; // Sheet name for payment records
+const PRICE_SHEET = 'price_per_kg'; // Sheet name for price data
 
 // Middleware to check authentication
 const requireAuth = (req, res, next) => {
@@ -61,6 +62,68 @@ const fetchPaymentRecords = async () => {
   } catch (error) {
     console.error('[fetchPaymentRecords] Error:', error);
     return {};
+  }
+};
+
+// Helper function to fetch latest price per kg
+const fetchLatestPricePerKg = async () => {
+  try {
+    console.log(`[fetchLatestPricePerKg] Attempting to fetch from sheet: ${PRICE_SHEET}`);
+    console.log(`[fetchLatestPricePerKg] Using spreadsheet ID: ${SPREADSHEET_ID}`);
+    
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_ID,
+      range: `${PRICE_SHEET}!A:C`, // Assuming columns: id, price_per_kg, created_at
+    });
+
+    console.log(`[fetchLatestPricePerKg] Response received:`, response.data);
+    
+    const rows = response.data.values || [];
+    console.log(`[fetchLatestPricePerKg] Total rows found: ${rows.length}`);
+    
+    if (rows.length <= 1) {
+      console.log('[fetchLatestPricePerKg] No data rows found (only header or empty)');
+      throw new Error('No price data available in price_per_kg sheet');
+    }
+
+    // Log all rows for debugging
+    console.log('[fetchLatestPricePerKg] All rows:', rows);
+    
+    // Sort by created_at (assuming column C) to get the latest
+    const priceData = rows.slice(1)
+      .map((row, index) => {
+        console.log(`[fetchLatestPricePerKg] Processing row ${index + 1}:`, row);
+        return {
+          id: row[0] || `row_${index}`,
+          price_per_kg: parseFloat(row[1]) || 0,
+          created_at: row[2] ? new Date(row[2]) : new Date(Date.now() - index * 1000) // Fallback with decreasing timestamps
+        };
+      })
+      .filter(item => item.price_per_kg > 0) // Only include valid prices
+      .sort((a, b) => b.created_at - a.created_at);
+
+    console.log('[fetchLatestPricePerKg] Processed and sorted price data:', priceData);
+    
+    if (priceData.length === 0) {
+      console.log('[fetchLatestPricePerKg] No valid price data found after processing');
+      throw new Error('No valid price data found in price_per_kg sheet');
+    }
+
+    const latestPrice = priceData[0].price_per_kg;
+    console.log(`[fetchLatestPricePerKg] Latest price found: ${latestPrice}`);
+    
+    return latestPrice;
+  } catch (error) {
+    console.error('[fetchLatestPricePerKg] Error details:', error.message);
+    console.error('[fetchLatestPricePerKg] Full error:', error);
+    
+    // Try to provide more specific error information
+    if (error.message.includes('Unable to parse range')) {
+      console.error('[fetchLatestPricePerKg] Sheet name might be incorrect or sheet does not exist');
+    }
+    
+    // Don't return a default price - let the error bubble up
+    throw new Error(`Failed to fetch price data: ${error.message}`);
   }
 };
 
@@ -151,37 +214,52 @@ router.post('/goods-in', requireAuth, async (req, res) => {
       acct_no,
       bank,
       phone_no,
-      amount_paid
+      paid_amount
     } = req.body;
 
-    // Validate required fields
-    if (!name || !weight || !acct_no || !bank || !phone_no || !amount_paid) {
+    // Validate required fields (paid_amount is now optional)
+    if (!name || !weight || !acct_no || !bank || !phone_no) {
       return res.status(400).json({
         success: false,
-        message: 'All fields are required'
+        message: 'Name, weight, account number, bank, and phone number are required'
       });
     }
 
+    // Handle optional paid_amount - default to 0 if not provided or invalid
+    const paidAmount = paid_amount && !isNaN(parseFloat(paid_amount)) ? parseFloat(paid_amount) : 0;
+
+    // Fetch latest price per kg
+    let price_per_kg;
+    try {
+      price_per_kg = await fetchLatestPricePerKg();
+      console.log(`[POST /goods-in] Latest price per kg fetched successfully: ${price_per_kg}`);
+    } catch (priceError) {
+      console.error('[POST /goods-in] Failed to fetch price:', priceError.message);
+      return res.status(500).json({
+        success: false,
+        message: `Unable to fetch current price: ${priceError.message}. Please ensure the price_per_kg sheet exists and has valid data.`
+      });
+    }
+    
+    // Calculate total amount based on weight and fetched price
+    const total_amount = parseFloat(weight) * price_per_kg;
+    
     // Generate unique ID
     const timestamp = Date.now();
     const in_id = `IN${timestamp}`;
     
-    // Calculate price per kg (assuming amount_paid is total amount)
-    const price_per_kg = (parseFloat(amount_paid) / parseFloat(weight)).toFixed(2);
-    
-    // Calculate total amount based on weight and price per kg
-    const total_amount = parseFloat(weight) * parseFloat(price_per_kg);
     const debt = 0; // Debt field kept for compatibility but not used for status
-    
     const created_at = new Date().toISOString();
-    const created_by = req.user.username;
+    
+    // Use full name (first_name + surname) for created_by
+    const created_by = `${req.user.first_name} ${req.user.surname}`;
 
-    // Prepare row data matching the sheet structure
+    // Prepare row data for in sheet
     const rowData = [
       in_id,
       name,
       parseFloat(weight),
-      parseFloat(price_per_kg),
+      price_per_kg,
       total_amount,
       acct_no,
       bank,
@@ -191,10 +269,10 @@ router.post('/goods-in', requireAuth, async (req, res) => {
       created_by
     ];
 
-    console.log(`[POST /goods-in] Adding new record by user: ${req.user.username}`);
+    console.log(`[POST /goods-in] Adding new record by user: ${created_by}`);
     console.log('[POST /goods-in] Row data:', rowData);
 
-    // Append to sheet
+    // Append to in sheet
     await sheets.spreadsheets.values.append({
       spreadsheetId: SPREADSHEET_ID,
       range: `${GOODS_IN_SHEET}!A:K`,
@@ -206,14 +284,46 @@ router.post('/goods-in', requireAuth, async (req, res) => {
 
     console.log(`[POST /goods-in] Successfully added record with ID: ${in_id}`);
 
+    // Generate unique payment ID for initial payment
+    const payment_timestamp = Date.now() + 1; // Ensure different timestamp
+    const in_payment_id = `PAY${payment_timestamp}`;
+    
+    // Prepare payment record data using user-provided paid amount
+    const paymentRowData = [
+      in_payment_id,
+      in_id,
+      paidAmount, // Use the validated paidAmount instead of parseFloat(paid_amount)
+      created_at,
+      created_by
+    ];
+
+    console.log('[POST /goods-in] Adding payment record:', paymentRowData);
+
+    // Only add payment record if there's an actual payment amount
+    if (paidAmount > 0) {
+      // Append to payment sheet
+      await sheets.spreadsheets.values.append({
+        spreadsheetId: SPREADSHEET_ID,
+        range: `${PAYMENT_SHEET}!A:E`,
+        valueInputOption: 'RAW',
+        requestBody: {
+          values: [paymentRowData]
+        }
+      });
+
+      console.log(`[POST /goods-in] Successfully added payment record with ID: ${in_payment_id}`);
+    } else {
+      console.log('[POST /goods-in] No payment amount provided, skipping payment record creation');
+    }
+
     res.json({
       success: true,
-      message: 'Goods in record added successfully',
+      message: 'Goods in record and payment added successfully',
       data: {
         in_id,
         name,
         weight: parseFloat(weight),
-        price_per_kg: parseFloat(price_per_kg),
+        price_per_kg: price_per_kg,
         amount: total_amount,
         acct_no,
         bank,
@@ -221,7 +331,9 @@ router.post('/goods-in', requireAuth, async (req, res) => {
         debt,
         created_at,
         created_by,
-        status: 'paid' // Status will be recalculated when fetched
+        payment_id: paidAmount > 0 ? in_payment_id : null,
+        amount_paid: paidAmount,
+        status: paidAmount >= total_amount ? 'paid' : (paidAmount > 0 ? 'partial' : 'unpaid')
       }
     });
 
@@ -229,7 +341,7 @@ router.post('/goods-in', requireAuth, async (req, res) => {
     console.error('[POST /goods-in] Error adding goods record:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to add goods record'
+      message: 'Failed to add goods record: ' + error.message
     });
   }
 });
@@ -330,7 +442,7 @@ router.post('/payment', requireAuth, async (req, res) => {
     const in_payment_id = `PAY${timestamp}`;
     
     const created_at = new Date().toISOString();
-    const created_by = req.user.username;
+    const created_by = `${req.user.first_name} ${req.user.surname}`;
 
     // Prepare row data for payment sheet
     const paymentRowData = [
@@ -341,7 +453,7 @@ router.post('/payment', requireAuth, async (req, res) => {
       created_by
     ];
 
-    console.log(`[POST /payment] Adding payment record by user: ${req.user.username}`);
+    console.log(`[POST /payment] Adding payment record by user: ${created_by}`);
     console.log('[POST /payment] Payment data:', paymentRowData);
 
     // Append to payment sheet
@@ -425,6 +537,31 @@ router.get('/payments/:in_id', requireAuth, async (req, res) => {
     res.status(500).json({ 
       success: false, 
       message: 'Failed to fetch payment records' 
+    });
+  }
+});
+
+// Test endpoint to check price_per_kg sheet access
+router.get('/test-price-sheet', requireAuth, async (req, res) => {
+  try {
+    console.log('[GET /test-price-sheet] Testing access to price_per_kg sheet');
+    const price = await fetchLatestPricePerKg();
+    res.json({
+      success: true,
+      message: 'Price sheet access successful',
+      data: {
+        latest_price: price,
+        sheet_name: PRICE_SHEET,
+        spreadsheet_id: SPREADSHEET_ID
+      }
+    });
+  } catch (error) {
+    console.error('[GET /test-price-sheet] Error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message,
+      sheet_name: PRICE_SHEET,
+      spreadsheet_id: SPREADSHEET_ID
     });
   }
 });

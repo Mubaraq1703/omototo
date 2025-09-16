@@ -1,5 +1,143 @@
 // Backend API configuration
-const API_BASE_URL = window.location.origin; // Use same origin as the frontend
+const API_BASE_URL = window.location.origin;
+
+// Modal message system
+function showModalMessage(message, type = 'info', title = '', actions = []) {
+    // Remove existing message modal if any
+    const existingModal = document.querySelector('.message-modal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    // Create modal
+    const modal = document.createElement('div');
+    modal.className = 'modal message-modal';
+    modal.style.display = 'block';
+    
+    // Determine icon and colors based on type
+    let icon, headerClass;
+    switch(type) {
+        case 'success':
+            icon = 'fas fa-check-circle';
+            headerClass = 'success';
+            break;
+        case 'error':
+            icon = 'fas fa-exclamation-triangle';
+            headerClass = 'error';
+            break;
+        case 'warning':
+            icon = 'fas fa-exclamation-circle';
+            headerClass = 'warning';
+            break;
+        default:
+            icon = 'fas fa-info-circle';
+            headerClass = 'info';
+    }
+    
+    // Create default title if not provided
+    if (!title) {
+        title = type.charAt(0).toUpperCase() + type.slice(1);
+    }
+    
+    // Create default actions if not provided
+    if (actions.length === 0) {
+        actions = [{
+            text: 'OK',
+            class: 'btn-primary',
+            action: () => modal.remove()
+        }];
+    }
+    
+    // Create action buttons HTML
+    const actionButtons = actions.map(action => 
+        `<button type="button" class="btn ${action.class || 'btn-secondary'}" data-action="${actions.indexOf(action)}">
+            ${action.icon ? `<i class="${action.icon}"></i> ` : ''}${action.text}
+        </button>`
+    ).join('');
+    
+    modal.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-header ${headerClass}">
+                <h2><i class="${icon}"></i> ${title}</h2>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <p class="message-text">${message}</p>
+                <div class="form-actions">
+                    ${actionButtons}
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Add event listeners
+    const closeBtn = modal.querySelector('.close');
+    closeBtn.addEventListener('click', () => modal.remove());
+    
+    // Handle action buttons
+    const actionBtns = modal.querySelectorAll('[data-action]');
+    actionBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const actionIndex = parseInt(btn.getAttribute('data-action'));
+            const action = actions[actionIndex];
+            if (action.action) {
+                action.action();
+            } else {
+                modal.remove();
+            }
+        });
+    });
+    
+    // Close modal when clicking outside
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.remove();
+        }
+    });
+    
+    return modal;
+}
+
+// Convenience functions for different message types
+function showSuccessMessage(message, title = 'Success') {
+    return showModalMessage(message, 'success', title);
+}
+
+function showErrorMessage(message, title = 'Error') {
+    return showModalMessage(message, 'error', title);
+}
+
+function showWarningMessage(message, title = 'Warning') {
+    return showModalMessage(message, 'warning', title);
+}
+
+function showInfoMessage(message, title = 'Information') {
+    return showModalMessage(message, 'info', title);
+}
+
+function showConfirmMessage(message, onConfirm, onCancel, title = 'Confirm') {
+    const actions = [
+        {
+            text: 'Cancel',
+            class: 'btn-secondary',
+            action: () => {
+                if (onCancel) onCancel();
+                document.querySelector('.message-modal').remove();
+            }
+        },
+        {
+            text: 'Confirm',
+            class: 'btn-primary',
+            action: () => {
+                if (onConfirm) onConfirm();
+                document.querySelector('.message-modal').remove();
+            }
+        }
+    ];
+    return showModalMessage(message, 'warning', title, actions);
+} // Use same origin as the frontend
 
 // Authentication state management
 let currentUser = null;
@@ -184,8 +322,9 @@ function filterTable() {
     
     // Filter the data instead of hiding/showing rows
     filteredData = currentGoodsData.filter(item => {
-        // Search filter
+        // Search filter (now includes in_id)
         const matchesSearch = !searchTerm || 
+            item.in_id.toLowerCase().includes(searchTerm) ||
             item.name.toLowerCase().includes(searchTerm) ||
             item.acct_no.toLowerCase().includes(searchTerm) ||
             item.bank.toLowerCase().includes(searchTerm) ||
@@ -383,6 +522,310 @@ function getStatusClass(status) {
     }
 }
 
+// Print Goods Receipt Function
+function printGoodsReceipt(goodsData) {
+    const printWindow = window.open('', '_blank');
+    const currentDate = new Date().toLocaleDateString('en-GB');
+    const currentTime = new Date().toLocaleTimeString('en-GB', { hour12: false });
+    
+    const printContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Goods In Receipt - ${goodsData.in_id}</title>
+            <style>
+                * {
+                    margin: 0;
+                    padding: 0;
+                    box-sizing: border-box;
+                }
+                
+                body {
+                    font-family: 'Arial', sans-serif;
+                    font-size: 12px;
+                    line-height: 1.4;
+                    color: #333;
+                    background: white;
+                }
+                
+                .receipt-container {
+                    max-width: 650px;
+                    margin: 30px auto;
+                    padding: 30px;
+                    border: 2px solid #2b6777;
+                    min-height: calc(100vh - 60px);
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: space-between;
+                }
+                
+                .receipt-content {
+                    flex-grow: 1;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                }
+                
+                .header {
+                    text-align: center;
+                    border-bottom: 2px solid #2b6777;
+                    padding-bottom: 20px;
+                    margin-bottom: 25px;
+                }
+                
+                .company-name {
+                    font-size: 18px;
+                    font-weight: bold;
+                    color: #2b6777;
+                    margin-bottom: 5px;
+                }
+                
+                .receipt-title {
+                    font-size: 16px;
+                    font-weight: bold;
+                    margin: 10px 0;
+                    color: #155724;
+                }
+                
+                .receipt-id {
+                    font-family: monospace;
+                    background: #f8f9fa;
+                    padding: 5px 10px;
+                    border-radius: 4px;
+                    display: inline-block;
+                    margin: 10px 0;
+                }
+                
+                .info-grid {
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    gap: 25px;
+                    margin: 25px 0;
+                }
+                
+                .info-section {
+                    border: 1px solid #ddd;
+                    padding: 20px;
+                    border-radius: 8px;
+                    background: #fafafa;
+                }
+                
+                .info-title {
+                    font-weight: bold;
+                    color: #2b6777;
+                    margin-bottom: 10px;
+                    border-bottom: 1px solid #eee;
+                    padding-bottom: 5px;
+                }
+                
+                .info-row {
+                    display: flex;
+                    justify-content: space-between;
+                    margin: 8px 0;
+                    padding: 3px 0;
+                }
+                
+                .info-label {
+                    font-weight: 500;
+                    color: #555;
+                }
+                
+                .info-value {
+                    font-weight: 600;
+                    color: #333;
+                }
+                
+                .amount-highlight {
+                    color: #28a745;
+                    font-size: 14px;
+                }
+                
+                .status {
+                    padding: 3px 8px;
+                    border-radius: 12px;
+                    font-size: 11px;
+                    font-weight: 500;
+                }
+                
+                .status.paid {
+                    background: #d4edda;
+                    color: #155724;
+                }
+                
+                .status.partial {
+                    background: #fff3cd;
+                    color: #856404;
+                }
+                
+                .status.unpaid {
+                    background: #f8d7da;
+                    color: #721c24;
+                }
+                
+                .footer {
+                    margin-top: 40px;
+                    padding-top: 20px;
+                    border-top: 1px solid #ddd;
+                    text-align: center;
+                    font-size: 10px;
+                    color: #666;
+                }
+                
+                .signature-section {
+                    margin-top: 50px;
+                    display: flex;
+                    justify-content: space-between;
+                    padding-top: 20px;
+                }
+                
+                .signature-box {
+                    width: 200px;
+                    text-align: center;
+                }
+                
+                .signature-line {
+                    border-top: 1px solid #333;
+                    margin-top: 30px;
+                    padding-top: 5px;
+                    position: relative;
+                }
+                
+                .authorized-signature {
+                    font-family: 'Brush Script MT', 'Lucida Handwriting', 'Segoe Script', cursive;
+                    font-size: 24px;
+                    color: #2b6777;
+                    font-weight: 400;
+                    transform: rotate(-2deg);
+                    display: inline-block;
+                    position: absolute;
+                    bottom: 30px;
+                    left: 50%;
+                    transform: translateX(-50%) rotate(-2deg);
+                    background: white;
+                    padding: 0 10px;
+                }
+                
+                @media print {
+                    .receipt-container {
+                        margin: 0;
+                        padding: 40px;
+                        border: none;
+                        box-shadow: none;
+                        min-height: auto;
+                        max-width: none;
+                        width: 100%;
+                    }
+                    
+                    body {
+                        font-size: 11px;
+                        margin: 0;
+                        padding: 20px;
+                    }
+                    
+                    .receipt-content {
+                        justify-content: flex-start;
+                    }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="receipt-container">
+                <div class="receipt-content">
+                    <div class="header">
+                        <div class="company-name">Omototo Agro-Allied Services</div>
+                        <div class="receipt-title">GOODS IN RECEIPT</div>
+                        <div class="receipt-id">Receipt ID: ${goodsData.in_id}</div>
+                    </div>
+                    
+                    <div class="info-grid">
+                        <div class="info-section">
+                            <div class="info-title">Transaction Details</div>
+                            <div class="info-row">
+                                <span class="info-label">Date:</span>
+                                <span class="info-value">${formatDate(goodsData.created_at)}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Goods Name:</span>
+                                <span class="info-value">${goodsData.name}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Weight:</span>
+                                <span class="info-value">${goodsData.weight.toLocaleString()} kg</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Price per kg:</span>
+                                <span class="info-value">₦${goodsData.price_per_kg.toFixed(2)}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Created by:</span>
+                                <span class="info-value">${goodsData.created_by}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="info-section">
+                            <div class="info-title">Payment Information</div>
+                            <div class="info-row">
+                                <span class="info-label">Account No:</span>
+                                <span class="info-value">${goodsData.acct_no}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Bank:</span>
+                                <span class="info-value">${goodsData.bank}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Phone:</span>
+                                <span class="info-value">${goodsData.phone_no}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Total Amount:</span>
+                                <span class="info-value amount-highlight">₦${goodsData.amount.toLocaleString()}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Amount Paid:</span>
+                                <span class="info-value amount-highlight">₦${goodsData.amount_paid.toLocaleString()}</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Status:</span>
+                                <span class="info-value"><span class="status ${goodsData.status}">${goodsData.status.charAt(0).toUpperCase() + goodsData.status.slice(1)}</span></span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="signature-section">
+                        <div class="signature-box">
+                            <div class="signature-line">Customer Signature</div>
+                        </div>
+                        <div class="signature-box">
+                            <div class="signature-line">
+                                <span class="authorized-signature">Omototo</span>
+                                Authorized Signature
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="footer">
+                    <p>This is a computer-generated receipt.</p>
+                    <p>Printed on: ${currentDate} at ${currentTime}</p>
+                    <p>Thank you for your business!</p>
+                </div>
+            </div>
+        </body>
+        </html>
+    `;
+    
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+    
+    // Wait for content to load then print
+    printWindow.onload = function() {
+        setTimeout(() => {
+            printWindow.print();
+            printWindow.close();
+        }, 250);
+    };
+}
+
 // Helper function to format status display
 function formatStatusDisplay(status) {
     switch(status) {
@@ -408,7 +851,7 @@ function openPaymentModal(inId, totalAmount, paidAmount) {
     const remaining = totalAmount - paidAmount;
     
     if (remaining <= 0) {
-        alert('This item is already fully paid.');
+        showInfoMessage('This item is already fully paid.');
         return;
     }
     
@@ -422,28 +865,30 @@ function openPaymentModal(inId, totalAmount, paidAmount) {
                 <h2><i class="fas fa-credit-card"></i> Make Payment</h2>
                 <span class="close">&times;</span>
             </div>
-            <form id="paymentForm">
-                <div class="form-group">
-                    <label>Total Amount: <strong>₦${totalAmount.toLocaleString()}</strong></label>
-                </div>
-                <div class="form-group">
-                    <label>Already Paid: <strong>₦${paidAmount.toLocaleString()}</strong></label>
-                </div>
-                <div class="form-group">
-                    <label>Remaining: <strong>₦${remaining.toLocaleString()}</strong></label>
-                </div>
-                <div class="form-group">
-                    <label for="payment-amount">Payment Amount *</label>
-                    <input type="number" id="payment-amount" name="amount_paid" required 
-                           placeholder="Enter amount to pay" step="0.01" min="0.01" max="${remaining * 2}">
-                </div>
-                <div class="form-actions">
-                    <button type="button" class="btn btn-secondary cancel-payment-btn">Cancel</button>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-credit-card"></i> Make Payment
-                    </button>
-                </div>
-            </form>
+            <div class="modal-body">
+                <form id="paymentForm">
+                    <div class="form-group">
+                        <label>Total Amount: <strong>₦${totalAmount.toLocaleString()}</strong></label>
+                    </div>
+                    <div class="form-group">
+                        <label>Already Paid: <strong>₦${paidAmount.toLocaleString()}</strong></label>
+                    </div>
+                    <div class="form-group">
+                        <label>Remaining: <strong>₦${remaining.toLocaleString()}</strong></label>
+                    </div>
+                    <div class="form-group">
+                        <label for="payment-amount">Payment Amount *</label>
+                        <input type="number" id="payment-amount" name="amount_paid" required 
+                               placeholder="Enter amount to pay" step="0.01" min="0.01" max="${remaining * 2}">
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary cancel-payment-btn">Cancel</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-credit-card"></i> Make Payment
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     `;
     
@@ -477,7 +922,7 @@ function openPaymentModal(inId, totalAmount, paidAmount) {
         const paymentAmount = parseFloat(formData.get('amount_paid'));
         
         if (paymentAmount <= 0) {
-            alert('Payment amount must be greater than 0');
+            showErrorMessage('Payment amount must be greater than 0');
             return;
         }
         
@@ -510,18 +955,18 @@ async function submitPayment(inId, amount, modal) {
         const result = await response.json();
         
         if (response.ok && result.success) {
-            alert('Payment recorded successfully!');
+            showSuccessMessage('Payment recorded successfully!');
             modal.remove();
             
             // Reload data to show updated status
             await loadGoodsInData();
             await loadDashboardData();
         } else {
-            alert(result.message || 'Failed to record payment.');
+            showErrorMessage(result.message || 'Failed to record payment.');
         }
     } catch (error) {
         console.error('Error submitting payment:', error);
-        alert('An error occurred while processing the payment.');
+        showErrorMessage('An error occurred while processing the payment.');
     } finally {
         // Restore button state
         submitBtn.innerHTML = originalText;
@@ -541,7 +986,7 @@ async function showItemDetailsModal(inId, date, itemName) {
                 <h2><i class="fas fa-eye"></i> Item Details</h2>
                 <span class="close">&times;</span>
             </div>
-            <div style="padding: 20px;">
+            <div class="modal-body">
                 <h3>${itemName}</h3>
                 <p><strong>Date:</strong> ${date}</p>
                 <p><strong>ID:</strong> ${inId}</p>
@@ -672,13 +1117,13 @@ async function submitGoodsIn(event) {
         acct_no: formData.get('acct_no'),
         bank: formData.get('bank'),
         phone_no: formData.get('phone_no'),
-        amount_paid: parseFloat(formData.get('amount_paid'))
+        paid_amount: parseFloat(formData.get('paid_amount')) || 0
     };
     
-    // Validate required fields
+    // Validate required fields (paid_amount is now optional)
     if (!goodsData.name || !goodsData.weight || !goodsData.acct_no || 
-        !goodsData.bank || !goodsData.phone_no || !goodsData.amount_paid) {
-        alert('Please fill in all required fields.');
+        !goodsData.bank || !goodsData.phone_no) {
+        showErrorMessage('Please fill in all required fields.');
         return;
     }
     
@@ -701,7 +1146,60 @@ async function submitGoodsIn(event) {
         const result = await response.json();
         
         if (response.ok && result.success) {
-            alert('Goods In record saved successfully!');
+            const totalAmount = result.data.amount.toLocaleString();
+            const paidAmount = result.data.amount_paid.toLocaleString();
+            const status = result.data.status;
+            const inId = result.data.in_id;
+            
+            // Create enhanced success message with styling
+            const successMessage = `
+                <div style="background: linear-gradient(135deg, #e8f5e8, #f0f9f0); padding: 20px; border-radius: 12px; border-left: 4px solid #28a745; margin-bottom: 15px;">
+                    <div style="display: flex; align-items: center; margin-bottom: 15px;">
+                        <i class="fas fa-check-circle" style="color: #28a745; font-size: 24px; margin-right: 12px;"></i>
+                        <h3 style="margin: 0; color: #155724; font-size: 18px;">Goods Record Saved Successfully!</h3>
+                    </div>
+                    
+                    <div style="background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                        <div style="display: grid; grid-template-columns: auto 1fr; gap: 8px 15px; font-size: 14px;">
+                            <strong style="color: #2b6777;">Record ID:</strong>
+                            <span style="font-family: monospace; background: #f8f9fa; padding: 2px 6px; border-radius: 4px; color: #495057;">${inId}</span>
+                            
+                            <strong style="color: #2b6777;">Total Amount:</strong>
+                            <span style="color: #28a745; font-weight: 600;">₦${totalAmount}</span>
+                            
+                            <strong style="color: #2b6777;">Amount Paid:</strong>
+                            <span style="color: #007bff; font-weight: 600;">₦${paidAmount}</span>
+                            
+                            <strong style="color: #2b6777;">Status:</strong>
+                            <span class="status ${status}" style="display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 500;">${status.charAt(0).toUpperCase() + status.slice(1)}</span>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 15px; padding: 10px; background: rgba(43, 103, 119, 0.1); border-radius: 6px; font-size: 13px; color: #2b6777;">
+                        <i class="fas fa-info-circle" style="margin-right: 6px;"></i>
+                        <strong>Note:</strong> You can search for this record using the ID: <code style="background: #fff; padding: 1px 4px; border-radius: 3px;">${inId}</code>
+                    </div>
+                </div>
+            `;
+            
+            const actions = [
+                {
+                    text: 'Print Receipt',
+                    class: 'btn-secondary',
+                    icon: 'fas fa-print',
+                    action: () => {
+                        printGoodsReceipt(result.data);
+                        document.querySelector('.message-modal').remove();
+                    }
+                },
+                {
+                    text: 'OK',
+                    class: 'btn-primary',
+                    action: () => document.querySelector('.message-modal').remove()
+                }
+            ];
+            
+            showModalMessage(successMessage, 'success', 'Success', actions);
             
             // Reset form and close modal
             closeGoodsInModal();
@@ -710,11 +1208,11 @@ async function submitGoodsIn(event) {
             await loadGoodsInData();
             await loadDashboardData();
         } else {
-            alert(result.message || 'Failed to save goods record.');
+            showErrorMessage(result.message || 'Failed to save goods record.');
         }
     } catch (error) {
         console.error('Error submitting goods data:', error);
-        alert('An error occurred while saving the record.');
+        showErrorMessage('An error occurred while saving the record.');
     } finally {
         // Restore button state
         submitBtn.innerHTML = originalText;
@@ -807,9 +1305,9 @@ function updateGoodsInTable(data) {
     const tbody = document.querySelector('#goods-in tbody');
     if (!tbody) return;
     
-    // Store data globally for pagination
-    currentGoodsData = data;
-    filteredData = data; // Initially, filtered data is same as all data
+    // Store data globally for pagination and sort by created_at (newest first)
+    currentGoodsData = data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    filteredData = currentGoodsData; // Initially, filtered data is same as all data
     currentPage = 1; // Reset to first page
     
     renderTablePage();
@@ -841,13 +1339,14 @@ function renderTablePage() {
     const endIndex = startIndex + rowsPerPage;
     const pageData = filteredData.slice(startIndex, endIndex);
     
-    // Sort data by created_at (newest first)
-    const sortedPageData = pageData.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-    
-    sortedPageData.forEach(item => {
+    // Use pageData directly since sorting is already done at the data level
+    pageData.forEach(item => {
         const row = document.createElement('tr');
         const formattedDate = formatDate(item.created_at);
         const statusClass = getStatusClass(item.status);
+        
+        // Store in_id as data attribute for reference but don't display it
+        row.setAttribute('data-in-id', item.in_id);
         
         row.innerHTML = `
             <td>${formattedDate}</td>
