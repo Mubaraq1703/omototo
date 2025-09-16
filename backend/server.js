@@ -24,7 +24,17 @@ const SPREADSHEET_ID = process.env.GOOGLE_SHEET_ID_APP;
 const SESSIONS_SHEET = 'session';
 
 // Security middleware
-app.use(helmet());
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+        "script-src": ["'self'", "https://cdnjs.cloudflare.com"],
+        "style-src": ["'self'", "https://cdnjs.cloudflare.com", "'unsafe-inline'"],
+      },
+    },
+  })
+);
 app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://localhost:8080', // Adjusted for consistency
   credentials: true

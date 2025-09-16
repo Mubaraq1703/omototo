@@ -359,6 +359,12 @@ function setupEventListeners() {
     if (goodsOutForm) {
         goodsOutForm.addEventListener('submit', submitGoodsOut);
     }
+
+    // Print Goods Out button event listener
+    const printGoodsOutBtn = document.getElementById('print-goods-out-btn');
+    if (printGoodsOutBtn) {
+        printGoodsOutBtn.addEventListener('click', printGoodsOutTable);
+    }
     
     // View receipt buttons event listeners
     const viewButtons = document.querySelectorAll('.view-btn');
@@ -3169,4 +3175,71 @@ function printGoodsOutReceipt(outId) {
         printWindow.print();
         printWindow.close();
     };
+}
+
+// Print Goods Out Table
+function printGoodsOutTable() {
+    if (typeof window.jspdf === 'undefined' || typeof window.jspdf.jsPDF === 'undefined') {
+        showErrorMessage('The PDF generation library is not loaded. Please check your internet connection and try again.');
+        return;
+    }
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    const table = document.querySelector('#goods-out table');
+    const headers = [];
+    table.querySelectorAll('thead th').forEach(th => {
+        // Exclude the "Action" column
+        if (th.innerText.toLowerCase() !== 'action') {
+            headers.push(th.innerText);
+        }
+    });
+
+    const body = [];
+    filteredGoodsOutData.forEach(item => {
+        const row = [
+            formatDate(item.created_at),
+            item.loader,
+            item.weight.toLocaleString(),
+            item.truck_no,
+            item.driver_no,
+            item.delivered_weight.toLocaleString(),
+            ((item.delivered_weight || 0) - (item.weight || 0)).toFixed(2)
+        ];
+        body.push(row);
+    });
+
+    doc.autoTable({
+        head: [headers],
+        body: body,
+        didDrawPage: function (data) {
+            // Header
+            const companyName = document.querySelector('.logo h1').innerText;
+            const reportTitle = 'Goods Out Report';
+            const reportDate = `Date: ${new Date().toLocaleDateString()}`;
+
+            doc.setFontSize(18);
+            doc.setFont('helvetica', 'bold');
+            doc.text(companyName, data.settings.margin.left, 20);
+
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'normal');
+            doc.text(reportTitle, data.settings.margin.left, 28);
+            
+            const pageWidth = doc.internal.pageSize.getWidth();
+            doc.text(reportDate, pageWidth - data.settings.margin.right, 28, { align: 'right' });
+
+
+            // Footer
+            var str = 'Page ' + doc.internal.getNumberOfPages();
+            doc.setFontSize(10);
+            var pageSize = doc.internal.pageSize;
+            var pageHeight = pageSize.height ? pageSize.height : pageSize.getHeight();
+            doc.text(str, data.settings.margin.left, pageHeight - 10);
+        },
+        margin: { top: 30 }
+    });
+
+    doc.save('goods-out-report.pdf');
 }
