@@ -445,14 +445,36 @@ tr:hover {
     font-weight: 500;
 }
 
+/* Payment Status Colors based on project specification */
+.status.paid {
+    background-color: #e6f7ee;
+    color: #0c9d58;
+}
+
+.status.partial {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.status.unpaid {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.status.over-paid {
+    background-color: #d1ecf1;
+    color: #0c5460;
+}
+
+/* Legacy status support for backward compatibility */
 .status.completed {
     background-color: #e6f7ee;
     color: #0c9d58;
 }
 
 .status.pending {
-    background-color: #fef7ec;
-    color: #ff9f43;
+    background-color: #fff3cd;
+    color: #856404;
 }
 
 /* Action Icons Styling */
@@ -492,14 +514,44 @@ tr:hover {
     font-size: 12px;
 }
 
+/* Payment Button Styling */
+.pay-btn {
+    background-color: #52ab98;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 6px 12px;
+    cursor: pointer;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.2s ease;
+    min-width: 60px;
+    justify-content: center;
+}
+
+.pay-btn:hover {
+    background-color: #2b6777;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.pay-btn i {
+    font-size: 12px;
+}
+
 /* Fallback when Font Awesome doesn't load */
 .view-btn i:not(.fa):before,
-.view-btn i.fa:not(.fas):before {
+.view-btn i.fa:not(.fas):before,
+.pay-btn i:not(.fa):before,
+.pay-btn i.fa:not(.fas):before {
     content: '';
     display: none;
 }
 
-.view-btn span {
+.view-btn span,
+.pay-btn span {
     font-weight: 500;
 }
 
@@ -507,8 +559,8 @@ tr:hover {
 th:last-child,
 td:last-child {
     text-align: center;
-    width: 80px;
-    min-width: 80px;
+    width: 120px;
+    min-width: 120px;
 }
 
 /* Forms */

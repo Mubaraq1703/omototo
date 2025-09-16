@@ -369,14 +369,246 @@ document.querySelectorAll('.date-btn').forEach(button => {
     });
 });
 
-// View Receipt Function (will be updated by the new implementation below)
-function viewReceipt(date, itemName, id = null) {
-    alert(`Viewing receipt for:
-${id ? `ID: ${id}
-` : ''}Date: ${date}
-Item: ${itemName}
+// Helper function to get CSS class for status
+function getStatusClass(status) {
+    switch(status) {
+        case 'paid': return 'paid';
+        case 'partial': return 'partial';
+        case 'unpaid': return 'unpaid';
+        case 'over-paid': return 'over-paid';
+        // Legacy support
+        case 'completed': return 'paid';
+        case 'pending': return 'partial';
+        default: return 'unpaid';
+    }
+}
 
-Receipt functionality will be implemented here.`);
+// Helper function to format status display
+function formatStatusDisplay(status) {
+    switch(status) {
+        case 'paid': return 'Paid';
+        case 'partial': return 'Partial';
+        case 'unpaid': return 'Unpaid';
+        case 'over-paid': return 'Over-paid';
+        // Legacy support
+        case 'completed': return 'Paid';
+        case 'pending': return 'Partial';
+        default: return 'Unpaid';
+    }
+}
+
+// View Item Details Function (enhanced from viewReceipt)
+function viewItemDetails(id, date, itemName) {
+    // Show a detailed modal with payment information
+    showItemDetailsModal(id, date, itemName);
+}
+
+// Open Payment Modal
+function openPaymentModal(inId, totalAmount, paidAmount) {
+    const remaining = totalAmount - paidAmount;
+    
+    if (remaining <= 0) {
+        alert('This item is already fully paid.');
+        return;
+    }
+    
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.display = 'block';
+    
+    modal.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-credit-card"></i> Make Payment</h2>
+                <span class="close" onclick="this.parentElement.parentElement.parentElement.remove()">&times;</span>
+            </div>
+            <form id="paymentForm">
+                <div class="form-group">
+                    <label>Total Amount: <strong>₦${totalAmount.toLocaleString()}</strong></label>
+                </div>
+                <div class="form-group">
+                    <label>Already Paid: <strong>₦${paidAmount.toLocaleString()}</strong></label>
+                </div>
+                <div class="form-group">
+                    <label>Remaining: <strong>₦${remaining.toLocaleString()}</strong></label>
+                </div>
+                <div class="form-group">
+                    <label for="payment-amount">Payment Amount *</label>
+                    <input type="number" id="payment-amount" name="amount_paid" required 
+                           placeholder="Enter amount to pay" step="0.01" min="0.01" max="${remaining * 2}">
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="this.closest('.modal').remove()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-credit-card"></i> Make Payment
+                    </button>
+                </div>
+            </form>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Handle payment form submission
+    const paymentForm = modal.querySelector('#paymentForm');
+    paymentForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const formData = new FormData(paymentForm);
+        const paymentAmount = parseFloat(formData.get('amount_paid'));
+        
+        if (paymentAmount <= 0) {
+            alert('Payment amount must be greater than 0');
+            return;
+        }
+        
+        await submitPayment(inId, paymentAmount, modal);
+    });
+}
+
+// Submit Payment
+async function submitPayment(inId, amount, modal) {
+    const submitBtn = modal.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    
+    // Show loading state
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+    submitBtn.disabled = true;
+    
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/payment`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include',
+            body: JSON.stringify({
+                in_id: inId,
+                amount_paid: amount
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok && result.success) {
+            alert('Payment recorded successfully!');
+            modal.remove();
+            
+            // Reload data to show updated status
+            await loadGoodsInData();
+            await loadDashboardData();
+        } else {
+            alert(result.message || 'Failed to record payment.');
+        }
+    } catch (error) {
+        console.error('Error submitting payment:', error);
+        alert('An error occurred while processing the payment.');
+    } finally {
+        // Restore button state
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    }
+}
+
+// Show Item Details Modal with payment history
+async function showItemDetailsModal(inId, date, itemName) {
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.display = 'block';
+    
+    modal.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-eye"></i> Item Details</h2>
+                <span class="close" onclick="this.parentElement.parentElement.parentElement.remove()">&times;</span>
+            </div>
+            <div style="padding: 20px;">
+                <h3>${itemName}</h3>
+                <p><strong>Date:</strong> ${date}</p>
+                <p><strong>ID:</strong> ${inId}</p>
+                
+                <h4 style="margin-top: 20px; margin-bottom: 10px;">Payment History</h4>
+                <div id="payment-history">
+                    <p>Loading payment history...</p>
+                </div>
+                
+                <div class="form-actions" style="margin-top: 20px;">
+                    <button type="button" class="btn btn-secondary" onclick="this.closest('.modal').remove()">Close</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Load payment history
+    await loadPaymentHistory(inId, modal.querySelector('#payment-history'));
+}
+
+// Load Payment History
+async function loadPaymentHistory(inId, container) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/payments/${inId}`, {
+            method: 'GET',
+            credentials: 'include'
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            if (result.success) {
+                displayPaymentHistory(result.data, container);
+            } else {
+                container.innerHTML = '<p>Failed to load payment history.</p>';
+            }
+        } else {
+            container.innerHTML = '<p>Failed to load payment history.</p>';
+        }
+    } catch (error) {
+        console.error('Error loading payment history:', error);
+        container.innerHTML = '<p>Error loading payment history.</p>';
+    }
+}
+
+// Display Payment History
+function displayPaymentHistory(payments, container) {
+    if (payments.length === 0) {
+        container.innerHTML = '<p style="color: #666; font-style: italic;">No payments recorded yet.</p>';
+        return;
+    }
+    
+    let totalPaid = 0;
+    const paymentRows = payments
+        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+        .map(payment => {
+            totalPaid += payment.amount_paid;
+            return `
+                <tr>
+                    <td>${formatDate(payment.created_at)}</td>
+                    <td>₦${payment.amount_paid.toLocaleString()}</td>
+                    <td>${payment.created_by || 'Unknown'}</td>
+                </tr>
+            `;
+        }).join('');
+    
+    container.innerHTML = `
+        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+            <strong>Total Paid: ₦${totalPaid.toLocaleString()}</strong>
+        </div>
+        <div class="table-container">
+            <table style="width: 100%;">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Amount</th>
+                        <th>By</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${paymentRows}
+                </tbody>
+            </table>
+        </div>
+    `;
 }
 
 // Goods In Modal Functions
@@ -503,10 +735,10 @@ function updateDashboardMetrics(data) {
         dueElement.textContent = `₦${data.amountDue.toLocaleString()}`;
     }
     
-    // Update Debt
-    const debtElement = document.querySelector('.metric-card:nth-child(4) .metric-value');
-    if (debtElement) {
-        debtElement.textContent = `₦${data.debt.toLocaleString()}`;
+    // Update Total Amount (replacing Debt with Total Amount)
+    const totalElement = document.querySelector('.metric-card:nth-child(4) .metric-value');
+    if (totalElement) {
+        totalElement.textContent = `₦${(data.totalAmount || 0).toLocaleString()}`;
     }
 }
 
@@ -557,7 +789,7 @@ function renderTablePage() {
     if (filteredData.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="9" style="text-align: center; padding: 40px; color: #666;">
+                <td colspan="10" style="text-align: center; padding: 40px; color: #666;">
                     <i class="fas fa-box-open" style="font-size: 24px; margin-bottom: 10px; display: block;"></i>
                     No goods in records found.
                 </td>
@@ -577,7 +809,7 @@ function renderTablePage() {
     sortedPageData.forEach(item => {
         const row = document.createElement('tr');
         const formattedDate = formatDate(item.created_at);
-        const statusClass = item.status === 'completed' ? 'completed' : 'pending';
+        const statusClass = getStatusClass(item.status);
         
         row.innerHTML = `
             <td>${formattedDate}</td>
@@ -585,28 +817,46 @@ function renderTablePage() {
             <td>${item.weight.toLocaleString()}</td>
             <td>₦${item.price_per_kg.toFixed(2)}</td>
             <td>₦${item.amount.toLocaleString()}</td>
+            <td>₦${(item.pay_made || 0).toLocaleString()}</td>
             <td>${item.acct_no}</td>
             <td>${item.bank}</td>
-            <td><span class="status ${statusClass}">${item.status.charAt(0).toUpperCase() + item.status.slice(1)}</span></td>
+            <td><span class="status ${statusClass}">${formatStatusDisplay(item.status)}</span></td>
             <td>
-                <button class="view-btn" data-id="${item.in_id}" data-date="${formattedDate}" data-item="${item.name}" title="View Receipt">
-                    <i class="fas fa-eye"></i>
-                    <span>View</span>
-                </button>
+                <div style="display: flex; gap: 5px; justify-content: center;">
+                    <button class="view-btn" data-id="${item.in_id}" data-date="${formattedDate}" data-item="${item.name}" title="View Details">
+                        <i class="fas fa-eye"></i>
+                        <span>View</span>
+                    </button>
+                    ${item.status !== 'paid' && item.status !== 'over-paid' ? 
+                        `<button class="pay-btn" data-id="${item.in_id}" data-amount="${item.amount}" data-paid="${item.pay_made || 0}" title="Make Payment">
+                            <i class="fas fa-credit-card"></i>
+                            <span>Pay</span>
+                        </button>` : ''}
+                </div>
             </td>
         `;
         
         tbody.appendChild(row);
     });
     
-    // Re-attach event listeners for view buttons
+    // Re-attach event listeners for action buttons
     const viewButtons = tbody.querySelectorAll('.view-btn');
     viewButtons.forEach(button => {
         button.addEventListener('click', function() {
             const date = this.getAttribute('data-date');
             const item = this.getAttribute('data-item');
             const id = this.getAttribute('data-id');
-            viewReceipt(date, item, id);
+            viewItemDetails(id, date, item);
+        });
+    });
+    
+    const payButtons = tbody.querySelectorAll('.pay-btn');
+    payButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const id = this.getAttribute('data-id');
+            const amount = parseFloat(this.getAttribute('data-amount'));
+            const paid = parseFloat(this.getAttribute('data-paid'));
+            openPaymentModal(id, amount, paid);
         });
     });
 }
@@ -638,14 +888,14 @@ function updateRecentActivitiesTable(data) {
     recentData.forEach(item => {
         const row = document.createElement('tr');
         const formattedDate = formatDate(item.created_at);
-        const statusClass = item.status === 'completed' ? 'completed' : 'pending';
+        const statusClass = getStatusClass(item.status);
         
         row.innerHTML = `
             <td>${formattedDate}</td>
             <td><span style="color: green;">In</span></td>
             <td>${item.weight.toLocaleString()}</td>
             <td>₦${item.amount.toLocaleString()}</td>
-            <td><span class="status ${statusClass}">${item.status.charAt(0).toUpperCase() + item.status.slice(1)}</span></td>
+            <td><span class="status ${statusClass}">${formatStatusDisplay(item.status)}</span></td>
         `;
         
         tbody.appendChild(row);
