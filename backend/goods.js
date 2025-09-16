@@ -686,4 +686,106 @@ router.get('/test-price-sheet', requireAuth, async (req, res) => {
   }
 });
 
+// Get latest price per kg
+router.get('/latest-price', requireAuth, async (req, res) => {
+    try {
+        console.log('[GET /latest-price] Fetching latest price per kg');
+        console.log('[GET /latest-price] Using spreadsheet ID:', SPREADSHEET_ID);
+        console.log('[GET /latest-price] Using sheet name:', PRICE_SHEET);
+        
+        // Try to get data from price_per_kg sheet
+        const response = await sheets.spreadsheets.values.get({
+            spreadsheetId: SPREADSHEET_ID,
+            range: `${PRICE_SHEET}!A:C`, // id, price_per_kg, created_at
+        });
+
+        console.log('[GET /latest-price] Raw response:', JSON.stringify(response.data, null, 2));
+        const rows = response.data.values || [];
+        console.log('[GET /latest-price] Total rows received:', rows.length);
+        
+        if (rows.length <= 1) {
+            console.log('[GET /latest-price] No data rows found (only header or empty)');
+            console.log('[GET /latest-price] Rows content:', rows);
+            return res.json({ 
+                success: true,
+                price: 1000,
+                message: 'No price data found, using default',
+                debug: { total_rows: rows.length, rows: rows }
+            });
+        }
+
+        // Process the data
+        const dataRows = rows.slice(1); // Skip header
+        console.log('[GET /latest-price] Processing data rows:', dataRows.length);
+        console.log('[GET /latest-price] First few data rows:', dataRows.slice(0, 3));
+        
+        if (dataRows.length === 0) {
+            console.log('[GET /latest-price] No data rows after header skip');
+            return res.json({ 
+                success: true,
+                price: 1000,
+                message: 'No data rows found after header',
+                debug: { total_rows: rows.length, data_rows: 0 }
+            });
+        }
+        
+        // Find the row with the most recent created_at
+        let latestRow = dataRows[0];
+        let latestDate = new Date(latestRow[2] || '1970-01-01');
+        console.log('[GET /latest-price] First row data:', latestRow);
+        console.log('[GET /latest-price] First row date:', latestDate);
+        
+        for (let i = 1; i < dataRows.length; i++) {
+            const rowDate = new Date(dataRows[i][2] || '1970-01-01');
+            console.log(`[GET /latest-price] Row ${i} date:`, rowDate);
+            if (rowDate > latestDate) {
+                latestDate = rowDate;
+                latestRow = dataRows[i];
+                console.log('[GET /latest-price] New latest row found:', latestRow);
+            }
+        }
+        
+        console.log('[GET /latest-price] Final latest row:', latestRow);
+        console.log('[GET /latest-price] Price column value (raw):', latestRow[1]);
+        
+        const latestPrice = parseFloat(latestRow[1]);
+        console.log('[GET /latest-price] Parsed price:', latestPrice);
+        
+        if (isNaN(latestPrice) || latestPrice <= 0) {
+            console.log('[GET /latest-price] Invalid price value, using default');
+            return res.json({ 
+                success: true,
+                price: 1000,
+                message: 'Invalid price value found, using default',
+                debug: { 
+                    raw_value: latestRow[1], 
+                    parsed_value: latestPrice,
+                    latest_row: latestRow 
+                }
+            });
+        }
+        
+        console.log('[GET /latest-price] Returning valid price:', latestPrice);
+        
+        res.json({ 
+            success: true,
+            price: latestPrice,
+            date: latestRow[2] || 'No date',
+            total_rows: dataRows.length,
+            latest_row: latestRow
+        });
+        
+    } catch (error) {
+        console.error('[GET /latest-price] Error details:', error.message);
+        console.error('[GET /latest-price] Full error:', error);
+        
+        res.json({ 
+            success: false,
+            price: 1000,
+            error: error.message,
+            message: 'Error fetching price, using default'
+        });
+    }
+});
+
 module.exports = router;

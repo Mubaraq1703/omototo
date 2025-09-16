@@ -19,6 +19,7 @@ body {
     background-color: var(--background);
     color: var(--text-dark);
     line-height: 1.6;
+    padding-top: 80px; /* Account for fixed header */
 }
 
 .container {
@@ -33,12 +34,47 @@ header {
     color: white;
     padding: 15px 0;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    z-index: 1000;
 }
 
 .header-content {
     display: flex;
     justify-content: space-between;
     align-items: center;
+}
+
+.price-display {
+    text-align: center;
+    color: white;
+    padding: 0 20px;
+}
+
+.price-label {
+    font-size: 12px;
+    font-weight: 500;
+    margin-bottom: 2px;
+    opacity: 0.9;
+}
+
+.price-value {
+    font-size: 18px;
+    font-weight: bold;
+    animation: blink 1.5s infinite;
+    color: #ffeb3b;
+}
+
+@keyframes blink {
+    0%, 50% {
+        opacity: 1;
+    }
+    51%, 100% {
+        opacity: 0.3;
+    }
 }
 
 .logo {
@@ -715,7 +751,7 @@ td:last-child {
 
 @media (min-width: 1024px) {
     .metrics-grid {
-        grid-template-columns: repeat(5, 1fr);
+        grid-template-columns: repeat(3, 1fr);
     }
 }
 
@@ -931,6 +967,14 @@ td:last-child {
 }
 
 @media (max-width: 600px) {
+    body {
+        padding-top: 70px; /* Smaller padding on mobile */
+    }
+    
+    header {
+        padding: 10px 0; /* Reduce header padding on mobile */
+    }
+    
     .modal-content {
         width: 95%;
         margin: 5% auto;

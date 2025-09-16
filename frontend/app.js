@@ -219,9 +219,12 @@ function setupLogoutHandler() {
         userAvatar.style.cursor = 'pointer';
         userAvatar.title = 'Click to logout';
         userAvatar.addEventListener('click', () => {
-            if (confirm('Are you sure you want to logout?')) {
-                logout();
-            }
+            showConfirmMessage(
+                'Are you sure you want to logout?',
+                () => logout(), // onConfirm
+                null, // onCancel (optional)
+                'Confirm Logout'
+            );
         });
     }
 }
@@ -235,9 +238,62 @@ window.addEventListener('load', async function() {
         setupDashboardDateFilter(); // Setup dashboard date filtering
         await loadDashboardStats(); // Load dashboard statistics
         await loadGoodsInData(); // Load goods in data
+        await loadLatestPrice(); // Load latest price per kg
         console.log('User authenticated successfully');
     }
 });
+
+// Price display functionality
+async function loadLatestPrice() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/latest-price`, {
+            method: 'GET',
+            credentials: 'include'
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            console.log('Latest price response:', data);
+            
+            // Show debug info if available
+            if (data.debug) {
+                console.log('Debug info:', data.debug);
+            }
+            if (data.message) {
+                console.log('Price message:', data.message);
+            }
+            if (data.latest_row) {
+                console.log('Latest row from sheet:', data.latest_row);
+            }
+            
+            const priceElement = document.getElementById('current-price-per-kg');
+            if (priceElement) {
+                if (data.price > 0) {
+                    priceElement.textContent = `₦${data.price.toLocaleString()}`;
+                } else {
+                    priceElement.textContent = '₦1,000';
+                }
+            }
+        } else {
+            console.error('Failed to fetch latest price - HTTP error:', response.status);
+            const errorText = await response.text();
+            console.error('Error response:', errorText);
+            const priceElement = document.getElementById('current-price-per-kg');
+            if (priceElement) {
+                priceElement.textContent = '₦1,000';
+            }
+        }
+    } catch (error) {
+        console.error('Error loading latest price:', error);
+        const priceElement = document.getElementById('current-price-per-kg');
+        if (priceElement) {
+            priceElement.textContent = '₦1,000';
+        }
+    }
+}
+
+// Auto-refresh price every 30 seconds
+setInterval(loadLatestPrice, 30000);
 
 // Setup all event listeners
 function setupEventListeners() {
@@ -245,9 +301,12 @@ function setupEventListeners() {
     const logoutBtn = document.querySelector('.logout-btn');
     if (logoutBtn) {
         logoutBtn.addEventListener('click', () => {
-            if (confirm('Are you sure you want to logout?')) {
-                logout();
-            }
+            showConfirmMessage(
+                'Are you sure you want to logout?',
+                () => logout(), // onConfirm
+                null, // onCancel (optional)
+                'Confirm Logout'
+            );
         });
     }
     
@@ -1660,26 +1719,6 @@ function updateDashboardStatCards(data) {
     if (amountPaidElement) {
         amountPaidElement.textContent = `₦${data.amountPaid.toLocaleString()}`;
     }
-    
-    // Update Amount Generated
-    const amountGeneratedElement = document.getElementById('amount-generated');
-    if (amountGeneratedElement) {
-        amountGeneratedElement.textContent = `₦${data.amountGenerated.toLocaleString()}`;
-    }
-    
-    // Update Profit (with color coding)
-    const profitElement = document.getElementById('profit');
-    if (profitElement) {
-        profitElement.textContent = `₦${data.profit.toLocaleString()}`;
-        // Add color coding for profit
-        if (data.profit > 0) {
-            profitElement.style.color = '#28a745'; // Green for positive profit
-        } else if (data.profit < 0) {
-            profitElement.style.color = '#dc3545'; // Red for loss
-        } else {
-            profitElement.style.color = '#6c757d'; // Gray for break-even
-        }
-    }
 }
 
 // Helper function to get date range based on filter type
@@ -1793,6 +1832,27 @@ function setupDashboardDateFilter() {
         });
     }
     
+    // Reload app button
+    const reloadBtn = document.getElementById('reload-app-btn');
+    if (reloadBtn) {
+        reloadBtn.addEventListener('click', () => {
+            showConfirmMessage(
+                'Are you sure you want to reload the application? Any unsaved changes will be lost.',
+                () => window.location.reload(), // onConfirm
+                null, // onCancel (optional)
+                'Confirm Reload'
+            );
+        });
+    }
+    
+    // Print dashboard button
+    const printBtn = document.getElementById('print-dashboard-btn');
+    if (printBtn) {
+        printBtn.addEventListener('click', () => {
+            printDashboardReport();
+        });
+    }
+    
     // Initialize with today's filter
     const todayRange = getDateRange('today');
     currentDateFilter = {
@@ -1802,25 +1862,431 @@ function setupDashboardDateFilter() {
     };
 }
 
-// Load dashboard summary data
-async function loadDashboardData() {
+// Print Dashboard Report Function
+async function printDashboardReport() {
     try {
-        const response = await fetch(`${API_BASE_URL}/api/dashboard-summary`, {
+        // Get current stats
+        const statsResponse = await fetch(`${API_BASE_URL}/api/dashboard-stats${buildDateFilterParams()}`, {
             method: 'GET',
             credentials: 'include'
         });
         
-        if (response.ok) {
-            const result = await response.json();
-            if (result.success) {
-                updateDashboardMetrics(result.data);
+        let stats = {
+            totalWeightIn: 0,
+            totalWeightOut: 0,
+            amountPaid: 0,
+            amountGenerated: 0,
+            profit: 0
+        };
+        
+        if (statsResponse.ok) {
+            const statsResult = await statsResponse.json();
+            if (statsResult.success) {
+                stats = statsResult.data;
             }
-        } else {
-            console.error('Failed to load dashboard data');
         }
+        
+        // Get filtered goods data
+        const goodsResponse = await fetch(`${API_BASE_URL}/api/goods-in`, {
+            method: 'GET',
+            credentials: 'include'
+        });
+        
+        let goodsData = [];
+        if (goodsResponse.ok) {
+            const goodsResult = await goodsResponse.json();
+            if (goodsResult.success) {
+                // Filter goods data by current date filter
+                goodsData = filterGoodsDataByDate(goodsResult.data);
+            }
+        }
+        
+        // Generate and print the report
+        generateDashboardPrintReport(stats, goodsData);
+        
     } catch (error) {
-        console.error('Error loading dashboard data:', error);
+        console.error('Error generating dashboard report:', error);
+        showErrorMessage('Failed to generate dashboard report.');
     }
+}
+
+// Helper function to build date filter query parameters
+function buildDateFilterParams() {
+    const params = new URLSearchParams();
+    
+    if (currentDateFilter.startDate) {
+        params.append('start_date', currentDateFilter.startDate);
+    }
+    
+    if (currentDateFilter.endDate) {
+        params.append('end_date', currentDateFilter.endDate);
+    }
+    
+    return params.toString() ? '?' + params.toString() : '';
+}
+
+// Helper function to filter goods data by current date filter
+function filterGoodsDataByDate(data) {
+    if (!currentDateFilter.startDate && !currentDateFilter.endDate) {
+        return data;
+    }
+    
+    const startDate = currentDateFilter.startDate ? new Date(currentDateFilter.startDate) : null;
+    const endDate = currentDateFilter.endDate ? new Date(currentDateFilter.endDate) : null;
+    
+    if (startDate) startDate.setHours(0, 0, 0, 0);
+    if (endDate) endDate.setHours(23, 59, 59, 999);
+    
+    return data.filter(item => {
+        if (!item.created_at) return false;
+        
+        const itemDate = new Date(item.created_at);
+        if (isNaN(itemDate.getTime())) return false;
+        
+        if (startDate && itemDate < startDate) return false;
+        if (endDate && itemDate > endDate) return false;
+        
+        return true;
+    });
+}
+
+// Generate and print dashboard report
+function generateDashboardPrintReport(stats, goodsData) {
+    const printWindow = window.open('', '_blank');
+    const currentDate = new Date().toLocaleDateString('en-GB');
+    const currentTime = new Date().toLocaleTimeString('en-GB', { hour12: false });
+    
+    // Format date range for display
+    let dateRangeText = 'All Records';
+    if (currentDateFilter.startDate || currentDateFilter.endDate) {
+        const startText = currentDateFilter.startDate ? formatDateForDisplay(currentDateFilter.startDate) : 'Beginning';
+        const endText = currentDateFilter.endDate ? formatDateForDisplay(currentDateFilter.endDate) : 'Present';
+        
+        if (currentDateFilter.startDate && currentDateFilter.endDate) {
+            // Both dates available
+            if (currentDateFilter.startDate === currentDateFilter.endDate) {
+                dateRangeText = startText; // Single date
+            } else {
+                dateRangeText = `${startText} to ${endText}`;
+            }
+        } else if (currentDateFilter.startDate) {
+            dateRangeText = `From ${startText}`;
+        } else if (currentDateFilter.endDate) {
+            dateRangeText = `Until ${endText}`;
+        }
+    }
+    
+    // Generate goods table rows
+    const goodsRows = goodsData.length > 0 
+        ? goodsData.map(item => `
+            <tr>
+                <td style="padding: 8px; border-bottom: 1px solid #eee; font-size: 11px;">${formatDate(item.created_at)}</td>
+                <td style="padding: 8px; border-bottom: 1px solid #eee; font-size: 11px;">${item.name}</td>
+                <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right; font-size: 11px;">${item.weight.toLocaleString()} kg</td>
+                <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right; font-size: 11px;">₦${item.price_per_kg.toFixed(2)}</td>
+                <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right; font-size: 11px;">₦${item.amount.toLocaleString()}</td>
+                <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right; font-size: 11px;">₦${(item.pay_made || 0).toLocaleString()}</td>
+                <td style="padding: 8px; border-bottom: 1px solid #eee; font-size: 10px;">${item.acct_no}</td>
+                <td style="padding: 8px; border-bottom: 1px solid #eee; font-size: 10px;">${item.bank}</td>
+                <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: center; font-size: 10px;">
+                    <span style="padding: 2px 6px; border-radius: 8px; font-size: 9px; background: ${getStatusColor(item.status)}; color: white;">
+                        ${formatStatusDisplay(item.status)}
+                    </span>
+                </td>
+            </tr>
+        `).join('')
+        : '<tr><td colspan="9" style="padding: 20px; text-align: center; color: #666; font-style: italic;">No records found for the selected date range</td></tr>';
+    
+    const printContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Dashboard Report - ${dateRangeText}</title>
+            <style>
+                * {
+                    margin: 0;
+                    padding: 0;
+                    box-sizing: border-box;
+                }
+                
+                body {
+                    font-family: 'Arial', sans-serif;
+                    font-size: 12px;
+                    line-height: 1.4;
+                    color: #333;
+                    background: white;
+                    margin: 20px;
+                }
+                
+                .report-container {
+                    max-width: 1200px;
+                    margin: 0 auto;
+                    padding: 20px;
+                }
+                
+                .header {
+                    text-align: center;
+                    border-bottom: 2px solid #2b6777;
+                    padding-bottom: 20px;
+                    margin-bottom: 25px;
+                }
+                
+                .company-name {
+                    font-size: 20px;
+                    font-weight: bold;
+                    color: #2b6777;
+                    margin-bottom: 5px;
+                }
+                
+                .report-title {
+                    font-size: 16px;
+                    font-weight: bold;
+                    margin: 10px 0;
+                    color: #155724;
+                }
+                
+                .date-range {
+                    font-size: 14px;
+                    color: #666;
+                    margin: 5px 0;
+                }
+                
+                .stats-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                    gap: 15px;
+                    margin: 25px 0;
+                }
+                
+                .stat-card {
+                    background: linear-gradient(135deg, #2b6777, #52ab98);
+                    color: white;
+                    padding: 15px;
+                    border-radius: 8px;
+                    text-align: center;
+                }
+                
+                .stat-value {
+                    font-size: 18px;
+                    font-weight: bold;
+                    margin-bottom: 5px;
+                }
+                
+                .stat-label {
+                    font-size: 12px;
+                    opacity: 0.9;
+                }
+                
+                .profit-positive {
+                    background: linear-gradient(135deg, #28a745, #20c997) !important;
+                }
+                
+                .profit-negative {
+                    background: linear-gradient(135deg, #dc3545, #e74c3c) !important;
+                }
+                
+                .goods-section {
+                    margin-top: 30px;
+                }
+                
+                .section-title {
+                    font-size: 16px;
+                    font-weight: bold;
+                    color: #2b6777;
+                    margin-bottom: 15px;
+                    border-bottom: 1px solid #eee;
+                    padding-bottom: 8px;
+                }
+                
+                .goods-table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin-bottom: 20px;
+                    border: 1px solid #ddd;
+                }
+                
+                .goods-table th {
+                    background: #2b6777;
+                    color: white;
+                    padding: 10px 8px;
+                    text-align: left;
+                    font-size: 11px;
+                    font-weight: 600;
+                }
+                
+                .goods-table td {
+                    padding: 8px;
+                    border-bottom: 1px solid #eee;
+                    font-size: 11px;
+                }
+                
+                .goods-table tr:nth-child(even) {
+                    background: #f8f9fa;
+                }
+                
+                .summary {
+                    background: #f8f9fa;
+                    padding: 15px;
+                    border-radius: 8px;
+                    margin-top: 20px;
+                    border-left: 4px solid #2b6777;
+                }
+                
+                .summary-title {
+                    font-weight: bold;
+                    color: #2b6777;
+                    margin-bottom: 10px;
+                }
+                
+                .summary-item {
+                    display: flex;
+                    justify-content: space-between;
+                    margin: 5px 0;
+                    font-size: 12px;
+                }
+                
+                .footer {
+                    margin-top: 30px;
+                    padding-top: 15px;
+                    border-top: 1px solid #ddd;
+                    text-align: center;
+                    font-size: 10px;
+                    color: #666;
+                }
+                
+                @media print {
+                    body {
+                        margin: 0;
+                        font-size: 10px;
+                    }
+                    
+                    .report-container {
+                        padding: 15px;
+                        max-width: 100%;
+                    }
+                    
+                    .stats-grid {
+                        grid-template-columns: repeat(5, 1fr);
+                        gap: 10px;
+                    }
+                    
+                    .stat-card {
+                        padding: 10px;
+                    }
+                    
+                    .goods-table th,
+                    .goods-table td {
+                        padding: 6px 4px;
+                        font-size: 9px;
+                    }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="report-container">
+                <div class="header">
+                    <div class="company-name">Omototo Agro-Allied Services</div>
+                    <div class="report-title">DASHBOARD REPORT</div>
+                    <div class="date-range">Period: ${dateRangeText}</div>
+                </div>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value">${stats.totalWeightIn.toLocaleString()} kg</div>
+                        <div class="stat-label">Total Weight In</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${stats.totalWeightOut.toLocaleString()} kg</div>
+                        <div class="stat-label">Total Weight Out</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">₦${stats.amountPaid.toLocaleString()}</div>
+                        <div class="stat-label">Amount Paid</div>
+                    </div>
+                </div>
+                
+                <div class="goods-section">
+                    <div class="section-title">Goods In Records (${goodsData.length} records)</div>
+                    <table class="goods-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Name</th>
+                                <th>Weight</th>
+                                <th>Price/kg</th>
+                                <th>Amount</th>
+                                <th>Paid</th>
+                                <th>Account</th>
+                                <th>Bank</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${goodsRows}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="summary">
+                    <div class="summary-title">Summary</div>
+                    <div class="summary-item">
+                        <span>Total Records:</span>
+                        <strong>${goodsData.length}</strong>
+                    </div>
+                    <div class="summary-item">
+                        <span>Total Weight:</span>
+                        <strong>${goodsData.reduce((sum, item) => sum + item.weight, 0).toLocaleString()} kg</strong>
+                    </div>
+                    <div class="summary-item">
+                        <span>Total Amount:</span>
+                        <strong>₦${goodsData.reduce((sum, item) => sum + item.amount, 0).toLocaleString()}</strong>
+                    </div>
+                    <div class="summary-item">
+                        <span>Total Paid:</span>
+                        <strong>₦${goodsData.reduce((sum, item) => sum + (item.pay_made || 0), 0).toLocaleString()}</strong>
+                    </div>
+                </div>
+                
+                <div class="footer">
+                    <p>Generated on: ${currentDate} at ${currentTime}</p>
+                    <p style="margin-top: 5px; font-size: 9px; color: #888;">Powered by Hemdeeii Dev 08142263056</p>
+                </div>
+            </div>
+        </body>
+        </html>
+    `;
+    
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+    
+    // Wait for content to load then print
+    printWindow.onload = function() {
+        setTimeout(() => {
+            printWindow.print();
+            printWindow.close();
+        }, 250);
+    };
+}
+
+// Helper function to get status color for print
+function getStatusColor(status) {
+    switch(status) {
+        case 'paid': return '#28a745';
+        case 'partial': return '#ffc107';
+        case 'unpaid': return '#dc3545';
+        case 'over-paid': return '#17a2b8';
+        default: return '#6c757d';
+    }
+}
+
+// Helper function to format date for display (DD/MM/YYYY)
+function formatDateForDisplay(dateString) {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
 }
 
 // Update dashboard metrics with real data
@@ -1862,7 +2328,6 @@ async function loadGoodsInData() {
             const result = await response.json();
             if (result.success) {
                 updateGoodsInTable(result.data);
-                updateRecentActivitiesTable(result.data);
             }
         } else {
             console.error('Failed to load goods in data');
@@ -2011,46 +2476,7 @@ function updateRecentActivitiesTable(data) {
     });
 }
 
-// Update recent activities table with real data (showing latest 6 records)
-function updateRecentActivitiesTable(data) {
-    const tbody = document.querySelector('#dashboard .table-container tbody');
-    if (!tbody) return;
-    
-    // Clear existing rows
-    tbody.innerHTML = '';
-    
-    if (data.length === 0) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="5" style="text-align: center; padding: 40px; color: #666;">
-                    No recent activities found.
-                </td>
-            </tr>
-        `;
-        return;
-    }
-    
-    // Sort data by created_at (newest first) and take only first 6
-    const recentData = data
-        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-        .slice(0, 6);
-    
-    recentData.forEach(item => {
-        const row = document.createElement('tr');
-        const formattedDate = formatDate(item.created_at);
-        const statusClass = item.status === 'completed' ? 'completed' : 'pending';
-        
-        row.innerHTML = `
-            <td>${formattedDate}</td>
-            <td><span style="color: green;">In</span></td>
-            <td>${item.weight.toLocaleString()}</td>
-            <td>₦${item.amount.toLocaleString()}</td>
-            <td><span class="status ${statusClass}">${item.status.charAt(0).toUpperCase() + item.status.slice(1)}</span></td>
-        `;
-        
-        tbody.appendChild(row);
-    });
-}
+
 
 // Format date from ISO string to DD/MM/YYYY
 function formatDate(isoDateString) {

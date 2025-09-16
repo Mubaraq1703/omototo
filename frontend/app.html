@@ -16,6 +16,10 @@
                     <i class="fas fa-warehouse"></i>
                     <h1>Omototo Agro-Allied Services</h1>
                 </div>
+                <div class="price-display">
+                    <div class="price-label">Current Price/kg</div>
+                    <div class="price-value" id="current-price-per-kg">Loading...</div>
+                </div>
                 <div class="user-info">
                     <span>Loading...</span>
                     <div class="user-avatar" title="Click to logout">
@@ -77,26 +81,22 @@
                         <div class="metric-value" id="amount-paid">₦0</div>
                         <div class="metric-label">Amount Paid</div>
                     </div>
-                    <div class="metric-card">
-                        <div class="metric-icon">
-                            <i class="fas fa-hand-holding-usd"></i>
-                        </div>
-                        <div class="metric-value" id="amount-generated">₦0</div>
-                        <div class="metric-label">Amount Generated</div>
-                    </div>
-                    <div class="metric-card">
-                        <div class="metric-icon">
-                            <i class="fas fa-chart-line"></i>
-                        </div>
-                        <div class="metric-value" id="profit">₦0</div>
-                        <div class="metric-label">Profit</div>
-                    </div>
                 </div>
 
                 <div class="card">
-                    <div class="card-title">
-                        <i class="fas fa-calendar"></i>
-                        Date Range Filter
+                    <div class="card-title" style="display: flex; justify-content: space-between; align-items: center;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <i class="fas fa-calendar"></i>
+                            Date Range Filter
+                        </div>
+                        <div style="display: flex; gap: 10px;">
+                            <button type="button" id="reload-app-btn" class="btn btn-secondary" style="padding: 8px 12px; font-size: 13px;" title="Reload Application">
+                                <i class="fas fa-sync-alt"></i> Reload
+                            </button>
+                            <button type="button" id="print-dashboard-btn" class="btn btn-primary" style="padding: 8px 12px; font-size: 13px;" title="Print Dashboard Report">
+                                <i class="fas fa-print"></i> Print
+                            </button>
+                        </div>
                     </div>
                     <div class="date-filter">
                         <button class="date-btn active" data-range="today">Today</button>
@@ -135,70 +135,6 @@
                             <i class="fas fa-minus-circle"></i>
                             Add Goods Out
                         </button>
-                    </div>
-                </div>
-
-                <div class="card">
-                    <div class="card-title">
-                        <i class="fas fa-history"></i>
-                        Recent Activities
-                    </div>
-                    <div class="table-container">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Type</th>
-                                    <th>Weight (kg)</th>
-                                    <th>Amount</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>12/05/2023</td>
-                                    <td><span style="color: green;">In</span></td>
-                                    <td>1,250</td>
-                                    <td>₦8,750</td>
-                                    <td><span class="status completed">Completed</span></td>
-                                </tr>
-                                <tr>
-                                    <td>11/05/2023</td>
-                                    <td><span style="color: red;">Out</span></td>
-                                    <td>850</td>
-                                    <td>₦5,950</td>
-                                    <td><span class="status completed">Completed</span></td>
-                                </tr>
-                                <tr>
-                                    <td>10/05/2023</td>
-                                    <td><span style="color: green;">In</span></td>
-                                    <td>2,500</td>
-                                    <td>₦15,000</td>
-                                    <td><span class="status pending">Pending</span></td>
-                                </tr>
-                                <tr>
-                                    <td>09/05/2023</td>
-                                    <td><span style="color: red;">Out</span></td>
-                                    <td>650</td>
-                                    <td>₦5,200</td>
-                                    <td><span class="status completed">Completed</span></td>
-                                </tr>
-                                <tr>
-                                    <td>08/05/2023</td>
-                                    <td><span style="color: green;">In</span></td>
-                                    <td>1,800</td>
-                                    <td>₦12,600</td>
-                                    <td><span class="status completed">Completed</span></td>
-                                </tr>
-                                <tr>
-                                    <td>07/05/2023</td>
-                                    <td><span style="color: red;">Out</span></td>
-                                    <td>1,200</td>
-                                    <td>₦8,400</td>
-                                    <td><span class="status completed">Completed</span></td>
-                                </tr>
-                            </tbody>
-                        </table>
                     </div>
                 </div>
             </div>
