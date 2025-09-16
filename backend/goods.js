@@ -788,4 +788,57 @@ router.get('/latest-price', requireAuth, async (req, res) => {
     }
 });
 
+// Set new price per kg
+router.post('/set-price', requireAuth, async (req, res) => {
+    try {
+        const { price } = req.body;
+
+        if (!price || isNaN(parseFloat(price)) || parseFloat(price) <= 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'A valid price is required.',
+            });
+        }
+
+        const newPrice = parseFloat(price);
+        const created_at = new Date().toISOString();
+        const id = `PRICE${Date.now()}`;
+        const created_by = `${req.user.first_name} ${req.user.surname}`;
+
+        const rowData = [
+            id,
+            newPrice,
+            created_at,
+            created_by
+        ];
+
+        await sheets.spreadsheets.values.append({
+            spreadsheetId: SPREADSHEET_ID,
+            range: `${PRICE_SHEET}!A:D`,
+            valueInputOption: 'RAW',
+            requestBody: {
+                values: [rowData],
+            },
+        });
+
+        res.json({
+            success: true,
+            message: 'Price updated successfully!',
+            data: {
+                id,
+                price: newPrice,
+                created_at,
+                created_by,
+            },
+        });
+
+    } catch (error) {
+        console.error('[POST /set-price] Error setting new price:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to set new price.',
+        });
+    }
+});
+
 module.exports = router;

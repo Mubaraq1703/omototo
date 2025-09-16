@@ -1035,3 +1035,50 @@ td:last-child {
         max-width: 95%;
     }
 }
+
+.settings-container {
+    display: flex;
+    gap: 20px;
+}
+
+.settings-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 200px;
+    flex-shrink: 0;
+}
+
+.settings-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 15px;
+    border-radius: 8px;
+    text-decoration: none;
+    color: var(--text-dark);
+    background-color: #f8f9fa;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.settings-nav-item:hover {
+    background-color: #e9ecef;
+}
+
+.settings-nav-item.active {
+    background-color: var(--primary);
+    color: white;
+    font-weight: 500;
+}
+
+.settings-content {
+    flex-grow: 1;
+}
+
+.settings-pane {
+    display: none;
+}
+
+.settings-pane.active {
+    display: block;
+}

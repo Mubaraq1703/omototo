@@ -181,6 +181,11 @@ function updateUserInterface() {
         if (userInfoSpan) {
             userInfoSpan.textContent = `${currentUser.first_name} ${currentUser.surname}`;
         }
+
+        const settingsUsername = document.getElementById('settings-username');
+        if (settingsUsername) {
+            settingsUsername.textContent = `${currentUser.first_name} ${currentUser.surname}`;
+        }
         
         // Update role-based access if needed
         console.log(`Welcome ${currentUser.first_name}! Role: ${currentUser.role}`);
@@ -321,7 +326,15 @@ function setupEventListeners() {
     // Add Goods Out button event listeners (multiple buttons)
     const addGoodsOutBtns = document.querySelectorAll('.add-goods-out-btn');
     addGoodsOutBtns.forEach(btn => {
-        btn.addEventListener('click', openGoodsOutModal);
+        btn.addEventListener('click', () => {
+            // Switch to the "Goods Out" tab first
+            const goodsOutTabButton = document.querySelector('[data-tab="goods-out"]');
+            if (goodsOutTabButton && !goodsOutTabButton.classList.contains('active')) {
+                goodsOutTabButton.click();
+            }
+            // Then open the modal
+            openGoodsOutModal();
+        });
     });
     
     // Modal close button event listener
@@ -359,6 +372,33 @@ function setupEventListeners() {
     if (goodsOutForm) {
         goodsOutForm.addEventListener('submit', submitGoodsOut);
     }
+
+    const setPriceForm = document.getElementById('set-price-form');
+    if (setPriceForm) {
+        setPriceForm.addEventListener('submit', submitNewPrice);
+    }
+
+    const settingsLogoutBtn = document.getElementById('settings-logout-btn');
+    if (settingsLogoutBtn) {
+        settingsLogoutBtn.addEventListener('click', logout);
+    }
+
+    // Settings navigation
+    const settingsNavItems = document.querySelectorAll('.settings-nav-item');
+    settingsNavItems.forEach(item => {
+        item.addEventListener('click', (e) => {
+            e.preventDefault();
+
+            // Remove active class from all items and panes
+            settingsNavItems.forEach(navItem => navItem.classList.remove('active'));
+            document.querySelectorAll('.settings-pane').forEach(pane => pane.classList.remove('active'));
+
+            // Add active class to clicked item and corresponding pane
+            item.classList.add('active');
+            const targetPaneId = item.getAttribute('data-target');
+            document.getElementById(targetPaneId).classList.add('active');
+        });
+    });
 
     // Print Goods Out button event listener
     const printGoodsOutBtn = document.getElementById('print-goods-out-btn');
@@ -3175,6 +3215,38 @@ function printGoodsOutReceipt(outId) {
         printWindow.print();
         printWindow.close();
     };
+}
+
+async function submitNewPrice(event) {
+    event.preventDefault();
+    const newPrice = document.getElementById('new-price').value;
+    if (!newPrice || newPrice <= 0) {
+        showErrorMessage('Please enter a valid price.');
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/set-price`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+            body: JSON.stringify({ price: newPrice }),
+        });
+
+        const result = await response.json();
+        if (response.ok && result.success) {
+            showSuccessMessage('Price updated successfully!');
+            loadLatestPrice(); // Refresh the price display
+            document.getElementById('set-price-form').reset();
+        } else {
+            showErrorMessage(result.message || 'Failed to update price.');
+        }
+    } catch (error) {
+        console.error('Error updating price:', error);
+        showErrorMessage('An error occurred while updating the price.');
+    }
 }
 
 // Print Goods Out Table
