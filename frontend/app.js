@@ -246,6 +246,7 @@ window.addEventListener('load', async function() {
         await loadDashboardStats(); // Load dashboard statistics
         await loadGoodsInData(); // Load goods in data
         await loadLatestPrice(); // Load latest price per kg
+        await loadUsers(); // Load user data
         console.log('User authenticated successfully');
     }
 });
@@ -304,6 +305,26 @@ setInterval(loadLatestPrice, 30000);
 
 // Setup all event listeners
 function setupEventListeners() {
+    const addUserBtn = document.getElementById('add-user-btn');
+    if (addUserBtn) {
+        addUserBtn.addEventListener('click', openAddUserModal);
+    }
+
+    const addUserForm = document.getElementById('addUserForm');
+    if (addUserForm) {
+        addUserForm.addEventListener('submit', submitNewUser);
+    }
+
+    const cancelAddUserBtn = document.querySelector('.cancel-add-user-btn');
+    if (cancelAddUserBtn) {
+        cancelAddUserBtn.addEventListener('click', closeAddUserModal);
+    }
+
+    const addUserModalCloseBtn = document.querySelector('#addUserModal .close');
+    if (addUserModalCloseBtn) {
+        addUserModalCloseBtn.addEventListener('click', closeAddUserModal);
+    }
+
     // Logout button event listener
     const logoutBtn = document.querySelector('.logout-btn');
     if (logoutBtn) {
@@ -376,6 +397,10 @@ function setupEventListeners() {
     const setPriceForm = document.getElementById('set-price-form');
     if (setPriceForm) {
         setPriceForm.addEventListener('submit', submitNewPrice);
+    }
+
+    if (addUserModalCloseBtn) {
+        addUserModalCloseBtn.addEventListener('click', closeAddUserModal);
     }
 
     const settingsLogoutBtn = document.getElementById('settings-logout-btn');
@@ -3246,6 +3271,151 @@ async function submitNewPrice(event) {
     } catch (error) {
         console.error('Error updating price:', error);
         showErrorMessage('An error occurred while updating the price.');
+    }
+}
+
+async function loadUsers() {
+    const userTableContainer = document.querySelector('#settings-user-management .table-container');
+    if (userTableContainer) {
+        userTableContainer.innerHTML = '<div class="loader">Loading...</div>';
+    }
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/users`, {
+            method: 'GET',
+            credentials: 'include',
+        });
+
+        const result = await response.json();
+        if (response.ok && result.success) {
+            renderUsersTable(result.data);
+        } else {
+            if (userTableContainer) {
+                userTableContainer.innerHTML = `<p style="color: red;">${result.message || 'Failed to load users.'}</p>`;
+            }
+        }
+    } catch (error) {
+        console.error('Error loading users:', error);
+        if (userTableContainer) {
+            userTableContainer.innerHTML = `<p style="color: red;">An error occurred while loading users.</p>`;
+        }
+    }
+}
+
+function renderUsersTable(users) {
+    const tableContainer = document.querySelector('#settings-user-management .table-container');
+    if (!tableContainer) return;
+
+    if (users.length === 0) {
+        tableContainer.innerHTML = '<p>No users found.</p>';
+        return;
+    }
+
+    const table = document.createElement('table');
+    table.innerHTML = `
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Role</th>
+                <th>Address</th>
+                <th>Username</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            ${users.map(user => `
+                <tr>
+                    <td>${user.surname || ''} ${user.first_name || ''} ${user.other_name || ''}</td>
+                    <td>${user.role || ''}</td>
+                    <td>${user.address || ''}</td>
+                    <td>${user.username || ''}</td>
+                    <td><button class="btn btn-danger delete-user-btn" data-user-id="${user.user_id}">Delete</button></td>
+                </tr>
+            `).join('')}
+        </tbody>
+    `;
+    tableContainer.innerHTML = '';
+    tableContainer.appendChild(table);
+
+    // Add event listeners for delete buttons
+    const deleteButtons = tableContainer.querySelectorAll('.delete-user-btn');
+    deleteButtons.forEach(button => {
+        button.addEventListener('click', deleteUser);
+    });
+}
+
+async function deleteUser(event) {
+    const userId = event.target.dataset.userId;
+    if (!userId) return;
+
+    showConfirmMessage(
+        'Are you sure you want to delete this user? This action cannot be undone.',
+        async () => {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/users/${userId}`, {
+                    method: 'DELETE',
+                    credentials: 'include',
+                });
+
+                const result = await response.json();
+                if (response.ok && result.success) {
+                    showSuccessMessage('User deleted successfully!');
+                    loadUsers(); // Refresh the user table
+                } else {
+                    showErrorMessage(result.message || 'Failed to delete user.');
+                }
+            } catch (error) {
+                console.error('Error deleting user:', error);
+                showErrorMessage('An error occurred while deleting the user.');
+            }
+        },
+        null,
+        'Confirm Deletion'
+    );
+}
+
+function openAddUserModal() {
+    document.getElementById('addUserModal').style.display = 'block';
+    document.body.style.overflow = 'hidden';
+}
+
+function closeAddUserModal() {
+    document.getElementById('addUserModal').style.display = 'none';
+    document.body.style.overflow = 'auto';
+    document.getElementById('addUserForm').reset();
+}
+
+async function submitNewUser(event) {
+    event.preventDefault();
+    const formData = new FormData(event.target);
+    const userData = Object.fromEntries(formData.entries());
+
+    if (!userData.surname || !userData.first_name || !userData.role || !userData.username || !userData.password) {
+        showErrorMessage('Please fill in all required fields.');
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/users`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+            body: JSON.stringify(userData),
+        });
+
+        const result = await response.json();
+        if (response.ok && result.success) {
+            showSuccessMessage('User created successfully!');
+            closeAddUserModal();
+            loadUsers(); // Refresh the user table
+        } else {
+            showErrorMessage(result.message || 'Failed to create user.');
+        }
+    } catch (error) {
+        console.error('Error creating user:', error);
+        showErrorMessage('An error occurred while creating the user.');
     }
 }
 

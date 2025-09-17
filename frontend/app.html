@@ -510,12 +510,7 @@
                                     <label for="confirm-password">Confirm New Password</label>
                                     <input type="password" id="confirm-password">
                                 </div>
-                                <div class="form-group">
-                                    <label class="checkbox-container">
-                                        <input type="checkbox" id="two-factor">
-                                        <span>Enable Two-Factor Authentication</span>
-                                    </label>
-                                </div>
+                                
                                 <div class="form-actions">
                                     <button class="btn btn-secondary">Cancel</button>
                                     <button class="btn btn-primary">Update Security</button>
@@ -699,6 +694,61 @@
                         <button type="submit" class="btn btn-primary">
                             <i class="fas fa-save"></i> Save Goods Out
                         </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add User Modal -->
+    <div id="addUserModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-user-plus"></i> Add New User</h2>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="addUserForm">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="surname">Surname *</label>
+                            <input type="text" id="surname" name="surname" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="first_name">First Name *</label>
+                            <input type="text" id="first_name" name="first_name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="other_name">Other Name</label>
+                            <input type="text" id="other_name" name="other_name">
+                        </div>
+                        <div class="form-group">
+                            <label for="address">Address</label>
+                            <input type="text" id="address" name="address">
+                        </div>
+                        <div class="form-group">
+                            <label for="phone">Phone</label>
+                            <input type="tel" id="phone" name="phone">
+                        </div>
+                        <div class="form-group">
+                            <label for="role">Role *</label>
+                            <select id="role" name="role" required>
+                                <option value="manager">Manager</option>
+                                <option value="secretary">Secretary</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="username">Username *</label>
+                            <input type="text" id="username" name="username" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="password">Password *</label>
+                            <input type="password" id="password" name="password" required>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary cancel-add-user-btn">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save User</button>
                     </div>
                 </form>
             </div>

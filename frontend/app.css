@@ -1082,3 +1082,10 @@ td:last-child {
 .settings-pane.active {
     display: block;
 }
+
+.loader {
+    text-align: center;
+    padding: 40px;
+    font-size: 16px;
+    color: #666;
+}

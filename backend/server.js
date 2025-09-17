@@ -10,6 +10,7 @@ const registerRoutes = require('./register');
 const authRoutes = require('./auth'); // Import new auth routes
 const goodsRoutes = require('./goods'); // Import goods routes
 const goodsOutRoutes = require('./goodsout'); // Import goods out routes
+const userRoutes = require('./users'); // Import user routes
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -121,6 +122,7 @@ app.use('/api/auth', registerRoutes);
 app.use('/api/auth', authRoutes); // Use new auth routes
 app.use('/api', goodsRoutes); // Use goods routes
 app.use('/api', goodsOutRoutes); // Use goods out routes
+app.use('/api', userRoutes); // Use user routes
 
 // Error handling middleware
 app.use((err, req, res, next) => {
