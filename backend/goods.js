@@ -606,7 +606,7 @@ router.get('/dashboard-stats', requireAuth, async (req, res) => {
     
     // Process out sheet data (weight and created_at)
     const outRows = outResponse.data.values || [];
-    const filteredOutRows = outRows.length > 1 ? filterByDate(outRows.slice(1), 9) : []; // created_at is column 9
+    const filteredOutRows = outRows.length > 1 ? filterByDate(outRows.slice(1), 8) : []; // created_at is column 8 (index 8)
     
     // Process in_payment data (paid_amount and created_at)
     const inPaymentRows = inPaymentResponse.data.values || [];
@@ -618,12 +618,12 @@ router.get('/dashboard-stats', requireAuth, async (req, res) => {
     
     // Calculate statistics
     const totalWeightIn = filteredInRows.reduce((sum, row) => {
-      const weight = parseFloat(row[2]) || 0; // weight is column 2
+      const weight = parseFloat(row[2]) || 0; // weight is column 2 (index 2)
       return sum + weight;
     }, 0);
     
     const totalWeightOut = filteredOutRows.reduce((sum, row) => {
-      const weight = parseFloat(row[2]) || 0; // weight is column 2
+      const weight = parseFloat(row[3]) || 0; // weight is column 3 (index 3) - original weight
       return sum + weight;
     }, 0);
     
