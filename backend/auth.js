@@ -1,4 +1,5 @@
 const express = require('express');
+const rateLimit = require('express-rate-limit');
 const bcrypt = require('bcryptjs');
 const { google } = require('googleapis');
 const crypto = require('crypto');
@@ -32,7 +33,7 @@ async function createSession(userId, userDetails, req) {
   const ipAddress = req.ip;
   const userAgent = req.headers['user-agent'];
   const createdAt = new Date().toISOString();
-  const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString(); // 1-hour session
+  const expiresAt = new Date(Date.now() + 15 * 60 * 60 * 1000).toISOString(); // 15-hour session
 
   const newSession = [
     sessionId,
@@ -135,8 +136,14 @@ async function endSession(sessionId) {
 
 // --- Routes ---
 
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10,
+  message: 'Too many login attempts from this IP, please try again after 15 minutes'
+});
+
 // Login route
-router.post('/login', [
+router.post('/login', loginLimiter, [
   body('username').trim().escape(),
   body('password'),
 ], async (req, res) => {
@@ -179,7 +186,7 @@ router.post('/login', [
     res.cookie('session_id', sessionId, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      maxAge: 60 * 60 * 1000, // 1 hour
+      maxAge: 15 * 60 * 60 * 1000, // 15 hours
     });
 
     res.json({ success: true, user });

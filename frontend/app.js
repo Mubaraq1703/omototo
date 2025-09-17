@@ -186,6 +186,54 @@ function updateUserInterface() {
         if (settingsUsername) {
             settingsUsername.textContent = `${currentUser.first_name} ${currentUser.surname}`;
         }
+
+        // Role-based visibility for dashboard elements
+        const metricsGrid = document.querySelector('.metrics-grid');
+        const printDashboardBtn = document.getElementById('print-dashboard-btn');
+
+        if (currentUser.role === 'manager') {
+            if (metricsGrid) metricsGrid.style.display = 'grid';
+            if (printDashboardBtn) printDashboardBtn.style.display = 'block';
+        } else {
+            if (metricsGrid) metricsGrid.style.display = 'none';
+            if (printDashboardBtn) printDashboardBtn.style.display = 'none';
+        }
+
+        // Role-based visibility for Goods In table
+        const goodsInTableContainer = document.querySelector('#goods-in .table-container');
+        const goodsInPagination = document.querySelector('#goods-in .pagination');
+
+        if (currentUser.role === 'manager') {
+            if (goodsInTableContainer) goodsInTableContainer.style.display = 'block';
+            if (goodsInPagination) goodsInPagination.style.display = 'flex';
+        } else {
+            if (goodsInTableContainer) goodsInTableContainer.style.display = 'none';
+            if (goodsInPagination) goodsInPagination.style.display = 'none';
+        }
+
+        // Role-based visibility for Goods Out table
+        const goodsOutTableContainer = document.querySelector('#goods-out .table-container');
+        const goodsOutPagination = document.querySelector('#goods-out .pagination');
+
+        if (currentUser.role === 'manager') {
+            if (goodsOutTableContainer) goodsOutTableContainer.style.display = 'block';
+            if (goodsOutPagination) goodsOutPagination.style.display = 'flex';
+        } else {
+            if (goodsOutTableContainer) goodsOutTableContainer.style.display = 'none';
+            if (goodsOutPagination) goodsOutPagination.style.display = 'none';
+        }
+
+        // Role-based visibility for Settings sections
+        const userManagementNav = document.querySelector('[data-target="settings-user-management"]');
+        const setPriceNav = document.querySelector('[data-target="settings-set-price"]');
+
+        if (currentUser.role === 'manager') {
+            if (userManagementNav) userManagementNav.style.display = 'flex';
+            if (setPriceNav) setPriceNav.style.display = 'flex';
+        } else {
+            if (userManagementNav) userManagementNav.style.display = 'none';
+            if (setPriceNav) setPriceNav.style.display = 'none';
+        }
         
         // Update role-based access if needed
         console.log(`Welcome ${currentUser.first_name}! Role: ${currentUser.role}`);
