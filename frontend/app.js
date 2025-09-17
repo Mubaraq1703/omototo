@@ -335,7 +335,7 @@ async function loadLatestPrice() {
                 if (data.price > 0) {
                     priceElement.textContent = `₦${data.price.toLocaleString()}`;
                 } else {
-                    priceElement.textContent = '₦1,000';
+                    priceElement.textContent = 'wait a minute...';
                 }
             }
         } else {
