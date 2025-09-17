@@ -708,7 +708,7 @@ router.get('/latest-price', requireAuth, async (req, res) => {
             console.log('[GET /latest-price] Rows content:', rows);
             return res.json({ 
                 success: true,
-                price: 1000,
+                price: 'wait a minute...',
                 message: 'No price data found, using default',
                 debug: { total_rows: rows.length, rows: rows }
             });
