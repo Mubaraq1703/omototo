@@ -8,6 +8,16 @@
     --text-light: #666;
 }
 
+body.dark-mode {
+    --primary: #52ab98;
+    --secondary: #2b6777;
+    --background: #121212;
+    --card-bg: #1e1e1e;
+    --accent: #333;
+    --text-dark: #e0e0e0;
+    --text-light: #a0a0a0;
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -1081,6 +1091,83 @@ td:last-child {
 
 .settings-pane.active {
     display: block;
+}
+
+/* Dark Mode Overrides */
+body.dark-mode header {
+    background-color: var(--card-bg);
+    border-bottom: 1px solid var(--accent);
+}
+
+body.dark-mode .button-nav {
+    background-color: var(--card-bg);
+}
+
+body.dark-mode .nav-btn.active {
+    background-color: var(--primary);
+}
+
+body.dark-mode .nav-btn:hover:not(.active) {
+    background-color: var(--secondary);
+}
+
+body.dark-mode .date-btn {
+    background-color: var(--card-bg);
+    color: var(--text-dark);
+    border: 1px solid var(--accent);
+}
+
+body.dark-mode .date-btn.active {
+    background-color: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+body.dark-mode .form-group input,
+body.dark-mode .form-group select {
+    background-color: var(--background);
+    color: var(--text-dark);
+    border-color: var(--accent);
+}
+
+body.dark-mode table {
+    border-color: var(--accent);
+}
+
+body.dark-mode th {
+    background-color: var(--secondary);
+    color: white;
+}
+
+body.dark-mode tr:hover {
+    background-color: #2a2a2a;
+}
+
+body.dark-mode .pagination-btn {
+    background-color: var(--card-bg);
+    color: var(--text-dark);
+    border-color: var(--accent);
+}
+
+body.dark-mode .pagination-btn:hover:not(:disabled) {
+    background-color: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+body.dark-mode .pagination-btn.active {
+    background-color: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+body.dark-mode .modal-content {
+    background-color: var(--card-bg);
+}
+
+body.dark-mode .modal-header {
+    background-color: var(--secondary);
+    border-bottom: 1px solid var(--accent);
 }
 
 .loader {

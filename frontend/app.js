@@ -238,6 +238,14 @@ function setupLogoutHandler() {
 
 // Initialize authentication on page load
 window.addEventListener('load', async function() {
+    if (localStorage.getItem('darkMode') === 'enabled') {
+        document.body.classList.add('dark-mode');
+        const darkModeToggle = document.getElementById('dark-mode-toggle');
+        if (darkModeToggle) {
+            darkModeToggle.checked = true;
+        }
+    }
+
     const isAuthenticated = await checkAuthentication();
     if (isAuthenticated) {
         setupLogoutHandler();
@@ -305,6 +313,25 @@ setInterval(loadLatestPrice, 30000);
 
 // Setup all event listeners
 function setupEventListeners() {
+    const darkModeToggle = document.getElementById('dark-mode-toggle');
+    if (darkModeToggle) {
+        darkModeToggle.addEventListener('change', toggleDarkMode);
+    }
+
+    const updateSecurityBtn = document.getElementById('update-security-btn');
+    if (updateSecurityBtn) {
+        updateSecurityBtn.addEventListener('click', updatePassword);
+    }
+
+    const cancelSecurityBtn = document.getElementById('cancel-security-btn');
+    if (cancelSecurityBtn) {
+        cancelSecurityBtn.addEventListener('click', () => {
+            document.getElementById('current-password').value = '';
+            document.getElementById('new-password').value = '';
+            document.getElementById('confirm-password').value = '';
+        });
+    }
+
     const addUserBtn = document.getElementById('add-user-btn');
     if (addUserBtn) {
         addUserBtn.addEventListener('click', openAddUserModal);
@@ -3416,6 +3443,57 @@ async function submitNewUser(event) {
     } catch (error) {
         console.error('Error creating user:', error);
         showErrorMessage('An error occurred while creating the user.');
+    }
+}
+
+async function updatePassword() {
+    const currentPassword = document.getElementById('current-password').value;
+    const newPassword = document.getElementById('new-password').value;
+    const confirmPassword = document.getElementById('confirm-password').value;
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
+        showErrorMessage('Please fill in all password fields.');
+        return;
+    }
+
+    if (newPassword !== confirmPassword) {
+        showErrorMessage('New password and confirm password do not match.');
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/auth/change-password`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+            body: JSON.stringify({ currentPassword, newPassword }),
+        });
+
+        const result = await response.json();
+        if (response.ok && result.success) {
+            showSuccessMessage('Password updated successfully!');
+            document.getElementById('current-password').value = '';
+            document.getElementById('new-password').value = '';
+            document.getElementById('confirm-password').value = '';
+        } else {
+            showErrorMessage(result.message || 'Failed to update password.');
+        }
+    } catch (error) {
+        console.error('Error updating password:', error);
+        showErrorMessage('An error occurred while updating the password.');
+    }
+}
+
+function toggleDarkMode() {
+    const darkModeToggle = document.getElementById('dark-mode-toggle');
+    if (darkModeToggle.checked) {
+        document.body.classList.add('dark-mode');
+        localStorage.setItem('darkMode', 'enabled');
+    } else {
+        document.body.classList.remove('dark-mode');
+        localStorage.setItem('darkMode', 'disabled');
     }
 }
 

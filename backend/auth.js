@@ -217,4 +217,60 @@ router.get('/session', (req, res) => {
   }
 });
 
+// Change password route
+router.post('/change-password', async (req, res) => {
+    if (!req.user) {
+        return res.status(401).json({ success: false, message: 'Authentication required' });
+    }
+
+    const { currentPassword, newPassword } = req.body;
+    const userId = req.user.id;
+
+    if (!currentPassword || !newPassword) {
+        return res.status(400).json({ success: false, message: 'All fields are required.' });
+    }
+
+    try {
+        const usersResponse = await sheets.spreadsheets.values.get({
+            spreadsheetId: SPREADSHEET_ID,
+            range: `${USERS_SHEET}!A:I`,
+        });
+
+        const users = usersResponse.data.values || [];
+        const userRowIndex = users.findIndex(row => row[0] === userId);
+
+        if (userRowIndex === -1) {
+            return res.status(404).json({ success: false, message: 'User not found.' });
+        }
+
+        const userRow = users[userRowIndex];
+        const hashedPassword = userRow[8];
+
+        const isMatch = await bcrypt.compare(currentPassword, hashedPassword);
+
+        if (!isMatch) {
+            return res.status(401).json({ success: false, message: 'Incorrect current password.' });
+        }
+
+        const newHashedPassword = await bcrypt.hash(newPassword, 10);
+
+        const rangeToUpdate = `${USERS_SHEET}!I${userRowIndex + 1}`;
+
+        await sheets.spreadsheets.values.update({
+            spreadsheetId: SPREADSHEET_ID,
+            range: rangeToUpdate,
+            valueInputOption: 'RAW',
+            resource: {
+                values: [[newHashedPassword]],
+            },
+        });
+
+        res.json({ success: true, message: 'Password updated successfully.' });
+
+    } catch (error) {
+        console.error('Change password error:', error);
+        res.status(500).json({ success: false, message: 'Internal server error.' });
+    }
+});
+
 module.exports = router;
