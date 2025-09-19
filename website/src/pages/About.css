@@ -1,0 +1,57 @@
+.about-content {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 40px;
+  margin-bottom: 50px;
+}
+
+.about-text {
+  flex: 2;
+  min-width: 300px;
+}
+
+.about-text h2 {
+  color: var(--primary-green);
+  margin: 30px 0 15px;
+}
+
+.about-text p {
+  margin-bottom: 15px;
+  font-size: 1.1rem;
+}
+
+.about-image {
+  flex: 1;
+  min-width: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.placeholder-image {
+  width: 100%;
+  height: 300px;
+  background-color: var(--light-tan);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--earth-brown);
+  font-weight: bold;
+  border-radius: 8px;
+}
+
+.why-choose-us {
+  margin-top: 50px;
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 30px;
+}
+
+@media (max-width: 768px) {
+  .about-content {
+    flex-direction: column;
+  }
+}

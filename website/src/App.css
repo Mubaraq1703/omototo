@@ -1,0 +1,165 @@
+.App {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+main {
+  flex: 1;
+}
+
+/* Header Styles */
+header {
+  background-color: white;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+/* Footer Styles */
+footer {
+  background-color: var(--earth-brown);
+  color: var(--light-text);
+  padding: 40px 0 20px;
+}
+
+/* Hero Section */
+.hero {
+  background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), 
+    radial-gradient(circle at center, var(--primary-green) 0%, var(--earth-brown) 150%);
+  background-size: cover;
+  background-position: center;
+  color: white;
+  text-align: center;
+  padding: 100px 0;
+}
+
+.hero h1 {
+  font-size: 3rem;
+  margin-bottom: 20px;
+}
+
+.hero p {
+  font-size: 1.2rem;
+  margin-bottom: 30px;
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Features Section */
+.features {
+  background-color: #f9f9f9;
+}
+
+.feature-card {
+  text-align: center;
+  padding: 30px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+}
+
+.feature-card:hover {
+  transform: translateY(-10px);
+}
+
+.feature-icon {
+  font-size: 2.5rem;
+  color: var(--primary-green);
+  margin-bottom: 20px;
+}
+
+/* Process Section */
+.process-steps {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 30px;
+}
+
+.process-step {
+  flex: 1;
+  min-width: 250px;
+  text-align: center;
+  padding: 20px;
+  border: 1px solid #eee;
+  border-radius: 8px;
+}
+
+.step-number {
+  display: inline-block;
+  width: 40px;
+  height: 40px;
+  background-color: var(--primary-green);
+  color: white;
+  border-radius: 50%;
+  line-height: 40px;
+  font-weight: bold;
+  margin-bottom: 15px;
+}
+
+/* FAQ Section */
+.faq-item {
+  margin-bottom: 20px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 20px;
+}
+
+.faq-question {
+  font-weight: 600;
+  font-size: 1.1rem;
+  margin-bottom: 10px;
+  color: var(--primary-green);
+}
+
+/* Contact Section */
+.contact-info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 30px;
+  margin-bottom: 40px;
+}
+
+.contact-card {
+  flex: 1;
+  min-width: 250px;
+  padding: 20px;
+  background: #f9f9f9;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.contact-icon {
+  font-size: 2rem;
+  color: var(--primary-green);
+  margin-bottom: 15px;
+}
+
+.map-container {
+  height: 400px;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 30px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .hero h1 {
+    font-size: 2rem;
+  }
+  
+  .hero p {
+    font-size: 1rem;
+  }
+  
+  .process-steps {
+    flex-direction: column;
+  }
+  
+  .contact-info {
+    flex-direction: column;
+  }
+}

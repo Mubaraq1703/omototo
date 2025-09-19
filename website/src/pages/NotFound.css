@@ -1,0 +1,27 @@
+.not-found {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 70vh;
+  text-align: center;
+}
+
+.not-found h1 {
+  font-size: 5rem;
+  color: var(--primary-green);
+  margin-bottom: 10px;
+}
+
+.not-found h2 {
+  font-size: 2rem;
+  margin-bottom: 20px;
+  color: var(--earth-brown);
+}
+
+.not-found p {
+  font-size: 1.2rem;
+  margin-bottom: 30px;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
