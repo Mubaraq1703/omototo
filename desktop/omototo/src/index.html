@@ -221,41 +221,32 @@
     </div>
 
     <script>
-        // Simulate loading process
-        const loadingText = document.querySelector('.loading-text');
-        const texts = [
-            "Initializing modules...",
-            "Loading inventory data...",
-            "Connecting to database...",
-            "Starting application...",
-            "Almost ready..."
-        ];
-        
-        let index = 0;
-        let count = 0;
-        
-        // Change loading text every 1.5 seconds
-        const textInterval = setInterval(() => {
-            index = (index + 1) % texts.length;
-            loadingText.textContent = texts[index];
-            count++;
-            
-            // Stop changing text after going through all messages twice
-            if (index === 0 && count > 5) {
-                clearInterval(textInterval);
+        // Initialize Tauri API
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Check if we're in a Tauri environment
+            if (window.__TAURI__) {
+                console.log(window.__TAURI__);
+                // Fix the import for Tauri v2 - invoke is now in the core module
+                const { invoke } = window.__TAURI__.core;
+                const { appWindow } = window.__TAURI__.window;
+                
+                // Listen for the signal to close this window
+                window.addEventListener('close-main-window', async () => {
+                    await appWindow.close();
+                });
+                
+                // Notify Rust that the main window is ready
+                setTimeout(async () => {
+                    try {
+                        await invoke('main_window_ready');
+                        // Signal to Rust that communication is complete
+                        await invoke('server_communication_complete');
+                    } catch (error) {
+                        console.error('Error during Tauri initialization:', error);
+                    }
+                }, 100);
             }
-        }, 1500);
-        
-        // After 6 seconds, navigate to omototo.onrender.com
-        setTimeout(() => {
-            loadingText.textContent = "Launching application...";
-            document.querySelector('.loading-progress').style.width = "100%";
-            
-            // Navigate to omototo.onrender.com after a short delay
-            setTimeout(() => {
-                window.location.href = "https://omototo.onrender.com";
-            }, 1000);
-        }, 6000);
+        });
     </script>
 </body>
 </html>

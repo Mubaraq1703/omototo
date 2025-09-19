@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OMOTOTO WAREHOUSE MANAGEMENT SOFTWARE</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #f1f5f9;
+            overflow: hidden;
+        }
+        
+        .webview-container {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            width: 90%;
+            max-width: 800px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+            animation: containerFade 0.8s ease-out;
+            border: 1px solid #334155;
+        }
+        
+        .webview-container::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.1) 0%, transparent 70%);
+            animation: rotate 10s linear infinite;
+            z-index: -1;
+        }
+        
+        .logo-container {
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .logo-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            border-radius: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 28px;
+            color: white;
+            box-shadow: 0 5px 15px rgba(99, 102, 241, 0.3);
+        }
+        
+        .logo-text {
+            font-size: 32px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            color: #f1f5f9;
+            background: linear-gradient(to right, #e0e7ff, #c7d2fe);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .tagline {
+            font-size: 18px;
+            margin-bottom: 30px;
+            color: #94a3b8;
+            font-weight: 400;
+        }
+        
+        .loading-container {
+            margin: 30px 0;
+        }
+        
+        .loading-bar {
+            height: 6px;
+            width: 100%;
+            background: #1e293b;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+        
+        .loading-progress {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(to right, #6366f1, #8b5cf6);
+            border-radius: 10px;
+            animation: loading 3s ease-in-out infinite;
+        }
+        
+        .loading-text {
+            font-size: 14px;
+            color: #94a3b8;
+        }
+        
+        .features {
+            display: flex;
+            justify-content: space-around;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+        
+        .feature {
+            display: flex;
+            align-items: center;
+            margin: 10px;
+            font-size: 14px;
+            color: #cbd5e1;
+            background: rgba(30, 41, 59, 0.5);
+            padding: 8px 15px;
+            border-radius: 20px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .feature-icon {
+            margin-right: 8px;
+            color: #818cf8;
+        }
+        
+        .version {
+            font-size: 12px;
+            color: #64748b;
+            margin-top: 20px;
+        }
+        
+        .copyright {
+            font-size: 12px;
+            color: #475569;
+            margin-top: 10px;
+        }
+        
+        @keyframes loading {
+            0% { width: 0%; }
+            50% { width: 70%; }
+            100% { width: 100%; }
+        }
+        
+        @keyframes containerFade {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4); }
+            70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(99, 102, 241, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
+        }
+        
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+            color: #94a3b8;
+            font-size: 12px;
+        }
+        
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .stat-value {
+            font-weight: 700;
+            font-size: 16px;
+            color: #e2e8f0;
+        }
+        
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        .neon-text {
+            text-shadow: 0 0 5px #6366f1, 0 0 10px #6366f1, 0 0 15px #6366f1, 0 0 20px #6366f1;
+        }
+    </style>
+</head>
+<body>
+    <div class="webview-container">
+        <div class="logo-container">
+            <div class="logo">
+                <div class="logo-icon pulse">
+                    <i class="fas fa-pallet"></i>
+                </div>
+                <h1 class="logo-text">OMOTOTO AGRO-ALLIED SERVICES</h1>
+            </div>
+        </div>
+        
+        <p class="tagline">Optimizing Your Supply Chain Management</p>
+        
+        <div class="features">
+            <div class="feature">
+                <span class="feature-icon"><i class="fas fa-boxes"></i></span>
+                <span>Inventory Tracking</span>
+            </div>
+            <div class="feature">
+                <span class="feature-icon"><i class="fas fa-clipboard-list"></i></span>
+                <span>Order Management</span>
+            </div>
+            <div class="feature">
+                <span class="feature-icon"><i class="fas fa-chart-line"></i></span>
+                <span>Real-time Analytics</span>
+            </div>
+        </div>
+        
+        <div class="loading-container">
+            <div class="loading-bar">
+                <div class="loading-progress"></div>
+            </div>
+            <div class="loading-text">Connecting to server...</div>
+        </div>
+
+        <div class="version">Version 4.2.1</div>
+        <div class="copyright">Powered by Hemdeeii Dev.</div>
+    </div>
+
+    <script>
+        // Initialize Tauri API
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Check if we're in a Tauri environment
+            if (window.__TAURI__) {
+                console.log(window.__TAURI__);
+                // Fix the import for Tauri v2 - invoke is now in the core module
+                const { invoke } = window.__TAURI__.core;
+
+                // Function to handle server communication with timeout
+                setTimeout(async () => {
+                    async function communicateWithServer() {
+                        const loadingText = document.querySelector('.loading-text');
+                        const loadingProgress = document.querySelector('.loading-progress');
+
+                        try {
+                            loadingText.textContent = "Connecting to server...";
+
+                            const isServerOnline = await invoke('check_server');
+
+                            if (isServerOnline) {
+                                loadingProgress.style.width = "100%";
+                                loadingText.textContent = "Application ready!";
+                                await invoke('server_communication_complete');
+                            } else {
+                                window.location.href = "no-internet.html";
+                            }
+
+                        } catch (error) {
+                            console.error('Server communication error:', error);
+                            window.location.href = "server-error.html";
+                        }
+                    }
+
+                    // Start server communication
+                    communicateWithServer();
+                }, 100);
+            }
+        });
+    </script>
+</body>
+</html>
