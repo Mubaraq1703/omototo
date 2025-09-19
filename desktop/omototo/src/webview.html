@@ -253,32 +253,25 @@
                 // Fix the import for Tauri v2 - invoke is now in the core module
                 const { invoke } = window.__TAURI__.core;
 
-                // Function to handle server communication with timeout
+                // Function to handle server communication
                 setTimeout(async () => {
                     async function communicateWithServer() {
                         const loadingText = document.querySelector('.loading-text');
                         const loadingProgress = document.querySelector('.loading-progress');
 
                         try {
-                            loadingText.textContent = "Connecting to server (1/2)...";
-                            const firstResponse = await invoke('check_server');
+                            loadingText.textContent = "Checking server status...";
+                            const serverStatus = await invoke('check_server');
 
-                            if (firstResponse) {
-                                loadingProgress.style.width = "50%";
-                                loadingText.textContent = "Connecting to server (2/2)...";
-                                const secondResponse = await invoke('check_server');
-
-                                if (secondResponse) {
-                                    loadingProgress.style.width = "100%";
-                                    loadingText.textContent = "Application ready!";
-                                    await invoke('server_communication_complete');
-                                } else {
-                                    window.location.href = "no-internet.html";
-                                }
+                            if (serverStatus === "success") {
+                                loadingProgress.style.width = "100%";
+                                loadingText.textContent = "Application ready!";
+                                await invoke('server_communication_complete');
+                            } else if (serverStatus === "server_error") {
+                                window.location.href = "server-error.html";
                             } else {
                                 window.location.href = "no-internet.html";
                             }
-
                         } catch (error) {
                             console.error('Server communication error:', error);
                             window.location.href = "server-error.html";

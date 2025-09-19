@@ -360,14 +360,14 @@ async function loadLatestPrice() {
             console.error('Error response:', errorText);
             const priceElement = document.getElementById('current-price-per-kg');
             if (priceElement) {
-                priceElement.textContent = '₦1,000';
+                priceElement.textContent = 'Reloading...';
             }
         }
     } catch (error) {
         console.error('Error loading latest price:', error);
         const priceElement = document.getElementById('current-price-per-kg');
         if (priceElement) {
-            priceElement.textContent = '₦1,000';
+            priceElement.textContent = 'Reloading...';
         }
     }
 }

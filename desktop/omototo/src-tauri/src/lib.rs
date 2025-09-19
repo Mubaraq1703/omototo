@@ -10,11 +10,19 @@ async fn main_window_ready(app_handle: tauri::AppHandle) -> Result<(), String> {
 }
 
 #[tauri::command]
-async fn check_server() -> Result<bool, String> {
-    let url = "https://omototo.onrender.com";
+async fn check_server() -> Result<String, String> {
+    let url = "https://omototo.onrender.com/index.html";
+
+    // Check the single endpoint
     match reqwest::get(url).await {
-        Ok(response) => Ok(response.status().is_success()),
-        Err(_) => Ok(false),
+        Ok(response) => {
+            if response.status().is_success() {
+                Ok("success".to_string())
+            } else {
+                Ok("server_error".to_string())
+            }
+        }
+        Err(_) => Ok("network_error".to_string()),
     }
 }
 
@@ -32,7 +40,7 @@ async fn server_communication_complete(app_handle: tauri::AppHandle) -> Result<(
     webview_window.set_focus().map_err(|e| format!("Failed to focus webview window: {}", e))?;
     
     // Navigate the webview to the actual application
-    webview_window.eval("window.location.href = 'https://omototo.onrender.com';")
+    webview_window.eval("window.location.href = 'https://omototo.onrender.com/index.html';")
         .map_err(|e| format!("Failed to navigate webview: {}", e))?;
     
     Ok(())
