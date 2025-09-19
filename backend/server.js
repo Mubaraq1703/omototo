@@ -11,6 +11,7 @@ const authRoutes = require('./auth'); // Import new auth routes
 const goodsRoutes = require('./goods'); // Import goods routes
 const goodsOutRoutes = require('./goodsout'); // Import goods out routes
 const userRoutes = require('./users'); // Import user routes
+const logsRoutes = require('./logs'); // Import logs routes
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -90,6 +91,11 @@ app.use(async (req, res, next) => {
         req.user = JSON.parse(data); // Attach user data to request
         req.session_id = id;
         console.log(`[Session Middleware] Session VALID. User: ${req.user.username}`);
+        
+        // Log user login if this is a new session
+        if (req.path === '/api/auth/session') {
+          await logsRoutes.addLogEntry('User Login', `User ${req.user.username} accessed the application`, req.user);
+        }
       } else {
         console.log('[Session Middleware] Session INVALID (inactive or expired).');
         // Clear cookie if session is invalid or expired
@@ -123,6 +129,7 @@ app.use('/api/auth', authRoutes); // Use new auth routes
 app.use('/api', goodsRoutes); // Use goods routes
 app.use('/api', goodsOutRoutes); // Use goods out routes
 app.use('/api', userRoutes); // Use user routes
+app.use('/api', logsRoutes.router); // Use logs routes
 
 // Error handling middleware
 app.use((err, req, res, next) => {

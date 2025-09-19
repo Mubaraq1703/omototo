@@ -8,6 +8,9 @@ const xss = require('xss');
 
 const router = express.Router();
 
+// Import logs module
+const { addLogEntry } = require('./logs');
+
 // --- Google Sheets API Initialization ---
 const auth = new google.auth.GoogleAuth({
   keyFile: process.env.GOOGLE_SERVICE_ACCOUNT_KEY_PATH || './credentials.json',
@@ -164,6 +167,8 @@ router.post('/login', loginLimiter, [
     const userRow = users.find(row => row[7] === username);
 
     if (!userRow) {
+      // Log failed login attempt
+      await addLogEntry('Failed Login', `Failed login attempt for username: ${username}`, null);
       return res.status(401).json({ success: false, error: 'Invalid credentials.' });
     }
 
@@ -171,6 +176,8 @@ router.post('/login', loginLimiter, [
     const isMatch = await bcrypt.compare(password, hashedPassword);
 
     if (!isMatch) {
+      // Log failed login attempt
+      await addLogEntry('Failed Login', `Failed login attempt for username: ${username}`, null);
       return res.status(401).json({ success: false, error: 'Invalid credentials.' });
     }
 
@@ -182,6 +189,9 @@ router.post('/login', loginLimiter, [
     };
 
     const sessionId = await createSession(user.id, user, req);
+    
+    // Log successful login
+    await addLogEntry('User Login', `User ${username} logged in successfully`, user);
 
     res.cookie('session_id', sessionId, {
       httpOnly: true,
@@ -206,6 +216,11 @@ router.post('/logout', async (req, res) => {
     console.log(`[LOGOUT] Attempting to end session: ${session_id}`);
     await endSession(session_id);
     console.log(`[LOGOUT] Session deletion completed for: ${session_id}`);
+    
+    // Log logout event
+    if (req.user) {
+      await addLogEntry('User Logout', `User ${req.user.username} logged out`, req.user);
+    }
   } else {
     console.log('[LOGOUT] No session ID found in logout request');
   }
@@ -271,6 +286,9 @@ router.post('/change-password', async (req, res) => {
                 values: [[newHashedPassword]],
             },
         });
+
+        // Log password change
+        await addLogEntry('Password Change', `User ${req.user.username} changed their password`, req.user);
 
         res.json({ success: true, message: 'Password updated successfully.' });
 

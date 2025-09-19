@@ -513,6 +513,11 @@ function setupEventListeners() {
             item.classList.add('active');
             const targetPaneId = item.getAttribute('data-target');
             document.getElementById(targetPaneId).classList.add('active');
+            
+            // Load logs data if logs pane is activated
+            if (targetPaneId === 'settings-logs') {
+                loadLogsData();
+            }
         });
     });
 
@@ -535,6 +540,7 @@ function setupEventListeners() {
     // Search and filter functionality
     setupSearchAndFilter();
     setupGoodsOutSearchAndFilter(); // Add goods out search and filter setup
+    setupLogsEventListeners(); // Add logs event listeners
     
     // Initialize pagination when data is loaded
     setupPagination();
@@ -980,154 +986,507 @@ async function printItemDetails(inId, itemName, date) {
                     background: #e8f4f8;
                     border: 1px solid #2b6777;
                     border-radius: 4px;
-                    padding: 8px;
-                    margin-top: 8px;
-                    display: flex;
-                    justify-content: space-between;
-                    font-weight: bold;
+                    margin-top: 10px;
+                    padding: 6px 12px;
                     font-size: 11px;
-                }
-                
-                .footer {
-                    margin-top: 15px;
-                    padding-top: 10px;
-                    border-top: 1px solid #ddd;
-                    text-align: center;
-                    font-size: 9px;
-                    color: #666;
-                }
-                
-                @media print {
-                    .details-container {
-                        margin: 0;
-                        padding: 15px;
-                        border: 1px solid #2b6777;
-                        box-shadow: none;
-                        max-width: 100%;
-                        width: 100%;
-                        page-break-inside: avoid;
-                    }
-                    
-                    body {
-                        font-size: 10px;
-                        margin: 0;
-                        padding: 10px;
-                    }
-                    
-                    .info-grid {
-                        gap: 10px;
-                    }
-                    
-                    .info-section {
-                        padding: 8px;
-                    }
-                    
-                    .payment-history {
-                        padding: 8px;
-                    }
-                    
-                    .footer {
-                        margin-top: 10px;
-                        font-size: 8px;
-                    }
                 }
             </style>
         </head>
         <body>
             <div class="details-container">
                 <div class="header">
-                    <div class="company-name">Omototo Agro-Allied Services</div>
-                    <div class="details-title">ITEM DETAILS & PAYMENT HISTORY</div>
-                    <div class="details-id">Item ID: ${itemData.in_id}</div>
+                    <div class="company-name">Company Name</div>
+                    <div class="details-title">Item Details</div>
+                    <div class="details-id">${itemData.in_id}</div>
                 </div>
-                
                 <div class="info-grid">
                     <div class="info-section">
-                        <div class="info-title">Transaction Details</div>
+                        <div class="info-title">Item Information</div>
                         <div class="info-row">
-                            <span class="info-label">Date Created:</span>
-                            <span class="info-value">${formatDate(itemData.created_at)}</span>
+                            <div class="info-label">Item Name</div>
+                            <div class="info-value">${itemData.name}</div>
                         </div>
                         <div class="info-row">
-                            <span class="info-label">Name:</span>
-                            <span class="info-value">${itemData.name}</span>
+                            <div class="info-label">Date</div>
+                            <div class="info-value">${formatDate(itemData.created_at)}</div>
                         </div>
                         <div class="info-row">
-                            <span class="info-label">Weight:</span>
-                            <span class="info-value">${itemData.weight.toLocaleString()} kg</span>
+                            <div class="info-label">Weight (kg)</div>
+                            <div class="info-value">${itemData.weight}</div>
                         </div>
                         <div class="info-row">
-                            <span class="info-label">Price per kg:</span>
-                            <span class="info-value">₦${itemData.price_per_kg.toFixed(2)}</span>
+                            <div class="info-label">Price per kg (₦)</div>
+                            <div class="info-value">${itemData.price_per_kg.toLocaleString()}</div>
                         </div>
                         <div class="info-row">
-                            <span class="info-label">Created by:</span>
-                            <span class="info-value">${itemData.created_by}</span>
+                            <div class="info-label">Total Amount (₦)</div>
+                            <div class="info-value">${itemData.amount.toLocaleString()}</div>
                         </div>
                     </div>
-                    
                     <div class="info-section">
-                        <div class="info-title">Contact & Banking</div>
+                        <div class="info-title">Payment Information</div>
                         <div class="info-row">
-                            <span class="info-label">Account No:</span>
-                            <span class="info-value">${itemData.acct_no}</span>
+                            <div class="info-label">Account Number</div>
+                            <div class="info-value">${itemData.acct_no}</div>
                         </div>
                         <div class="info-row">
-                            <span class="info-label">Bank:</span>
-                            <span class="info-value">${itemData.bank}</span>
+                            <div class="info-label">Bank</div>
+                            <div class="info-value">${itemData.bank}</div>
                         </div>
                         <div class="info-row">
-                            <span class="info-label">Phone Number:</span>
-                            <span class="info-value">${itemData.phone_no}</span>
+                            <div class="info-label">Total Paid (₦)</div>
+                            <div class="info-value">${totalPaid.toLocaleString()}</div>
                         </div>
                         <div class="info-row">
-                            <span class="info-label">Status:</span>
-                            <span class="info-value"><span class="status ${itemData.status}">${itemData.status.charAt(0).toUpperCase() + itemData.status.slice(1)}</span></span>
+                            <div class="info-label">Remaining (₦)</div>
+                            <div class="info-value">${(itemData.amount - totalPaid).toLocaleString()}</div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-label">Status</div>
+                            <div class="info-value ${getStatusClass(itemData.status)}">${itemData.status}</div>
                         </div>
                     </div>
-                    
                     <div class="payment-history">
-                        <div class="payment-history-title">Payment Transaction History</div>
+                        <div class="payment-history-title">Payment Transactions</div>
                         <table class="payment-table">
-                            <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Amount Paid</th>
-                                    <th>Processed By</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${paymentRows}
-                            </tbody>
+                            <tr>
+                                <th>Date</th>
+                                <th>Amount (₦)</th>
+                                <th>By</th>
+                            </tr>
+                            ${paymentRows}
                         </table>
-                        
-                        <div class="summary-row">
-                            <span>Total Amount: ₦${itemData.amount.toLocaleString()}</span>
-                            <span>Total Paid: ₦${totalPaid.toLocaleString()}</span>
-                            <span>Balance Due: ₦${(itemData.amount - totalPaid).toLocaleString()}</span>
-                        </div>
                     </div>
-                </div>
-                
-                <div class="footer">
-                    <p>Generated on: ${currentDate} at ${currentTime} | Omototo Agro-Allied Services</p>
-                    <p style="margin-top: 5px; font-size: 8px; color: #888;">Powered by Hemdeeii Dev 08142263056</p>
+                    <div class="summary-row">
+                        <div class="info-label">Printed On</div>
+                        <div class="info-value">${currentDate} ${currentTime}</div>
+                    </div>
                 </div>
             </div>
         </body>
         </html>
     `;
     
+    printWindow.document.open();
     printWindow.document.write(printContent);
     printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
+    printWindow.close();
+}
+
+// Print Goods Out Function
+async function printGoodsOutTable() {
+    const response = await fetch(`${API_BASE_URL}/api/goods-out`, {
+        method: 'GET',
+        credentials: 'include'
+    });
     
-    // Wait for content to load then print
-    printWindow.onload = function() {
-        setTimeout(() => {
-            printWindow.print();
-            printWindow.close();
-        }, 250);
-    };
+    if (!response.ok) {
+        showErrorMessage('Failed to fetch goods out data for printing.');
+        return;
+    }
+    
+    const result = await response.json();
+    if (!result.success || !result.data || result.data.length === 0) {
+        showErrorMessage('No goods out data found for printing.');
+        return;
+    }
+    
+    const goodsOutData = result.data;
+    const currentDate = new Date().toLocaleDateString('en-GB');
+    const currentTime = new Date().toLocaleTimeString('en-GB', { hour12: false });
+    
+    const rows = goodsOutData.map(item => `
+        <tr>
+            <td>${item.out_id}</td>
+            <td>${item.date}</td>
+            <td>${item.item}</td>
+            <td>${item.weight}</td>
+            <td>${item.price_per_kg.toLocaleString()}</td>
+            <td>${item.amount.toLocaleString()}</td>
+        </tr>
+    `).join('');
+    
+    const printContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Goods Out Report</title>
+            <style>
+                * {
+                    margin: 0;
+                    padding: 0;
+                    box-sizing: border-box;
+                }
+                
+                body {
+                    font-family: 'Arial', sans-serif;
+                    font-size: 12px;
+                    line-height: 1.4;
+                    color: #333;
+                    background: white;
+                }
+                
+                .table-container {
+                    width: 100%;
+                    margin: 15px auto;
+                    padding: 20px;
+                    border: 2px solid #2b6777;
+                    height: auto;
+                    page-break-inside: avoid;
+                }
+                
+                .header {
+                    text-align: center;
+                    border-bottom: 2px solid #2b6777;
+                    padding-bottom: 12px;
+                    margin-bottom: 15px;
+                }
+                
+                .company-name {
+                    font-size: 16px;
+                    font-weight: bold;
+                    color: #2b6777;
+                    margin-bottom: 3px;
+                }
+                
+                .details-title {
+                    font-size: 14px;
+                    font-weight: bold;
+                    margin: 5px 0;
+                    color: #155724;
+                }
+                
+                .info-grid {
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    gap: 15px;
+                    margin: 15px 0;
+                }
+                
+                .info-section {
+                    border: 1px solid #ddd;
+                    padding: 12px;
+                    border-radius: 6px;
+                    background: #fafafa;
+                }
+                
+                .info-title {
+                    font-weight: bold;
+                    color: #2b6777;
+                    margin-bottom: 8px;
+                    border-bottom: 1px solid #eee;
+                    padding-bottom: 4px;
+                    font-size: 12px;
+                }
+                
+                .info-row {
+                    display: flex;
+                    justify-content: space-between;
+                    margin: 6px 0;
+                    padding: 2px 0;
+                    font-size: 11px;
+                }
+                
+                .info-label {
+                    font-weight: 500;
+                    color: #555;
+                    flex: 0 0 45%;
+                }
+                
+                .info-value {
+                    font-weight: 600;
+                    color: #333;
+                    text-align: right;
+                    flex: 1;
+                }
+                
+                .summary-row {
+                    background: #e8f4f8;
+                    border: 1px solid #2b6777;
+                    border-radius: 4px;
+                    margin-top: 10px;
+                    padding: 6px 12px;
+                    font-size: 11px;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="table-container">
+                <div class="header">
+                    <div class="company-name">Company Name</div>
+                    <div class="details-title">Goods Out Report</div>
+                </div>
+                <table id="goods-out-table">
+                    <tr>
+                        <th>Out ID</th>
+                        <th>Date</th>
+                        <th>Item</th>
+                        <th>Weight (kg)</th>
+                        <th>Price per kg (₦)</th>
+                        <th>Total Amount (₦)</th>
+                    </tr>
+                    ${rows}
+                </table>
+                <div class="summary-row">
+                    <div class="info-label">Printed On</div>
+                    <div class="info-value">${currentDate} ${currentTime}</div>
+                </div>
+            </div>
+        </body>
+        </html>
+    `;
+    
+    const doc = new jsPDF();
+    doc.fromHTML(printContent, 15, 15, {
+        width: 180
+    });
+    doc.save('goods-out-report.pdf');
+}
+
+// Logs variables
+let currentLogsData = []; // Store all logs data for pagination
+let currentLogsPage = 1;
+let logsRowsPerPage = 10;
+let filteredLogsData = []; // Store filtered logs data for pagination
+
+// Setup logs-specific event listeners
+function setupLogsEventListeners() {
+    const logsSearchInput = document.getElementById('logs-search');
+    const refreshLogsBtn = document.getElementById('refresh-logs-btn');
+    
+    if (logsSearchInput) {
+        logsSearchInput.addEventListener('input', filterLogsTable);
+    }
+    
+    if (refreshLogsBtn) {
+        refreshLogsBtn.addEventListener('click', loadLogsData);
+    }
+}
+
+// Load logs data
+async function loadLogsData() {
+    try {
+        showLogsLoading();
+        
+        const response = await fetch(`${API_BASE_URL}/api/logs`, {
+            method: 'GET',
+            credentials: 'include'
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            if (result.success) {
+                updateLogsTable(result.data);
+            } else {
+                showLogsError('Failed to load logs data.');
+            }
+        } else {
+            showLogsError('Failed to load logs data.');
+        }
+    } catch (error) {
+        console.error('Error loading logs data:', error);
+        showLogsError('An error occurred while loading logs data.');
+    }
+}
+
+// Show loading state for logs
+function showLogsLoading() {
+    const tbody = document.querySelector('#logs-table tbody');
+    if (tbody) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="4" style="text-align: center; padding: 40px;">
+                    <i class="fas fa-spinner fa-spin" style="font-size: 24px;"></i>
+                    <p style="margin-top: 10px;">Loading logs...</p>
+                </td>
+            </tr>
+        `;
+    }
+}
+
+// Show error state for logs
+function showLogsError(message) {
+    const tbody = document.querySelector('#logs-table tbody');
+    if (tbody) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="4" style="text-align: center; padding: 40px; color: #dc3545;">
+                    <i class="fas fa-exclamation-triangle" style="font-size: 24px; margin-bottom: 10px; display: block;"></i>
+                    ${message}
+                </td>
+            </tr>
+        `;
+    }
+}
+
+// Update logs table with real data
+function updateLogsTable(data) {
+    const tbody = document.querySelector('#logs-table tbody');
+    if (!tbody) return;
+    
+    // Store data globally for pagination and sort by created_at (newest first)
+    currentLogsData = data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    filteredLogsData = currentLogsData; // Initially, filtered data is same as all data
+    currentLogsPage = 1; // Reset to first page
+    
+    renderLogsTablePage();
+    updateLogsPaginationControls();
+}
+
+// Render current page of logs table data
+function renderLogsTablePage() {
+    const tbody = document.querySelector('#logs-table tbody');
+    if (!tbody) return;
+    
+    // Clear existing rows
+    tbody.innerHTML = '';
+    
+    if (filteredLogsData.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="4" style="text-align: center; padding: 40px; color: #666;">
+                    <i class="fas fa-history" style="font-size: 24px; margin-bottom: 10px; display: block;"></i>
+                    No activity logs found.
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    // Calculate pagination
+    const startIndex = (currentLogsPage - 1) * logsRowsPerPage;
+    const endIndex = startIndex + logsRowsPerPage;
+    const pageData = filteredLogsData.slice(startIndex, endIndex);
+    
+    // Render table rows
+    pageData.forEach(item => {
+        const row = document.createElement('tr');
+        const formattedDate = formatLogDate(item.created_at);
+        
+        row.innerHTML = `
+            <td>${formattedDate}</td>
+            <td>${item.created_by}</td>
+            <td>${item.activity}</td>
+            <td>${item.details}</td>
+        `;
+        
+        tbody.appendChild(row);
+    });
+}
+
+// Update logs pagination controls
+function updateLogsPaginationControls() {
+    const paginationContainer = document.getElementById('logs-pagination');
+    if (!paginationContainer) return;
+    
+    // Calculate pagination info
+    const totalRecords = filteredLogsData.length;
+    const totalPages = Math.ceil(totalRecords / logsRowsPerPage);
+    
+    // Clear existing pagination
+    paginationContainer.innerHTML = '';
+    
+    if (totalPages <= 1) return; // Don't show pagination if only one page
+    
+    // Previous button
+    const prevBtn = document.createElement('button');
+    prevBtn.className = 'pagination-btn';
+    prevBtn.innerHTML = '<i class="fas fa-chevron-left"></i>';
+    prevBtn.disabled = currentLogsPage === 1;
+    prevBtn.addEventListener('click', () => {
+        if (currentLogsPage > 1) {
+            currentLogsPage--;
+            renderLogsTablePage();
+            updateLogsPaginationControls();
+        }
+    });
+    paginationContainer.appendChild(prevBtn);
+    
+    // Page numbers
+    const maxVisiblePages = 5;
+    let startPage = Math.max(1, currentLogsPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+    
+    // Adjust start page if we're near the end
+    if (endPage - startPage < maxVisiblePages - 1) {
+        startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+    
+    for (let i = startPage; i <= endPage; i++) {
+        const pageBtn = document.createElement('button');
+        pageBtn.className = `pagination-btn ${i === currentLogsPage ? 'active' : ''}`;
+        pageBtn.textContent = i;
+        pageBtn.addEventListener('click', () => {
+            currentLogsPage = i;
+            renderLogsTablePage();
+            updateLogsPaginationControls();
+        });
+        paginationContainer.appendChild(pageBtn);
+    }
+    
+    // Next button
+    const nextBtn = document.createElement('button');
+    nextBtn.className = 'pagination-btn';
+    nextBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
+    nextBtn.disabled = currentLogsPage === totalPages;
+    nextBtn.addEventListener('click', () => {
+        if (currentLogsPage < totalPages) {
+            currentLogsPage++;
+            renderLogsTablePage();
+            updateLogsPaginationControls();
+        }
+    });
+    paginationContainer.appendChild(nextBtn);
+    
+    // Add page info
+    const startRecord = Math.min((currentLogsPage - 1) * logsRowsPerPage + 1, totalRecords);
+    const endRecord = Math.min(currentLogsPage * logsRowsPerPage, totalRecords);
+    const pageInfo = document.createElement('div');
+    pageInfo.className = 'pagination-info';
+    pageInfo.textContent = `Showing ${startRecord}-${endRecord} of ${totalRecords} records`;
+    paginationContainer.appendChild(pageInfo);
+}
+
+// Filter logs table
+function filterLogsTable() {
+    const searchTerm = document.getElementById('logs-search')?.value.toLowerCase() || '';
+    
+    // Filter the data
+    filteredLogsData = currentLogsData.filter(item => {
+        // Search filter
+        const matchesSearch = !searchTerm || 
+            item.log_id.toLowerCase().includes(searchTerm) ||
+            item.activity.toLowerCase().includes(searchTerm) ||
+            item.created_by.toLowerCase().includes(searchTerm) ||
+            item.details.toLowerCase().includes(searchTerm) ||
+            item.created_at.toLowerCase().includes(searchTerm);
+        
+        return matchesSearch;
+    });
+    
+    // Reset to first page when filtering
+    currentLogsPage = 1;
+    
+    // Re-render table and pagination
+    renderLogsTablePage();
+    updateLogsPaginationControls();
+}
+
+// Format date for logs display
+function formatLogDate(isoDateString) {
+    if (!isoDateString) return '';
+    
+    const date = new Date(isoDateString);
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    const seconds = date.getSeconds().toString().padStart(2, '0');
+    
+    return `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
 }
 
 // Print Goods Receipt Function

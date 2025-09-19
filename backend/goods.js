@@ -821,6 +821,9 @@ router.post('/set-price', requireAuth, async (req, res) => {
             },
         });
 
+        // Log price change
+        await addLogEntry('Price Change', `Price changed to ₦${newPrice} by ${created_by}`, req.user);
+
         res.json({
             success: true,
             message: 'Price updated successfully!',
