@@ -211,8 +211,24 @@ loginForm.addEventListener('submit', async function(event) {
     }
 });
 
+// Fetch server status and log to console
+async function fetchServerStatus() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/status`);
+        if (response.ok) {
+            const data = await response.json();
+            console.log(`%c[Server Status: ${data.status}]`, 'color: #28a745; font-weight: bold;', data.message);
+        } else {
+            console.error('Failed to fetch server status.');
+        }
+    } catch (error) {
+        console.error('Error fetching server status:', error);
+    }
+}
+
 // Check if user is already authenticated
 window.addEventListener('load', async function() {
+    fetchServerStatus(); // Fetch and log server status
     try {
         const response = await fetch(`${API_BASE_URL}/api/auth/session`, {
             method: 'GET',

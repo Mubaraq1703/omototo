@@ -112,6 +112,11 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'Server is running' });
 });
 
+// Status route
+app.get('/api/status', (req, res) => {
+  res.json({ status: 'online', message: 'Warehouse server is running.' });
+});
+
 // API Routes
 app.use('/api/auth', registerRoutes);
 app.use('/api/auth', authRoutes); // Use new auth routes

@@ -286,6 +286,7 @@ function setupLogoutHandler() {
 
 // Initialize authentication on page load
 window.addEventListener('load', async function() {
+    fetchServerStatus(); // Fetch and log server status
     if (localStorage.getItem('darkMode') === 'enabled') {
         document.body.classList.add('dark-mode');
         const darkModeToggle = document.getElementById('dark-mode-toggle');
@@ -306,6 +307,21 @@ window.addEventListener('load', async function() {
         console.log('User authenticated successfully');
     }
 });
+
+// Fetch server status and log to console
+async function fetchServerStatus() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/status`);
+        if (response.ok) {
+            const data = await response.json();
+            console.log(`%c[Server Status: ${data.status}]`, 'color: #28a745; font-weight: bold;', data.message);
+        } else {
+            console.error('Failed to fetch server status.');
+        }
+    } catch (error) {
+        console.error('Error fetching server status:', error);
+    }
+}
 
 // Price display functionality
 async function loadLatestPrice() {
