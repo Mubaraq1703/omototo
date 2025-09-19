@@ -260,14 +260,21 @@
                         const loadingProgress = document.querySelector('.loading-progress');
 
                         try {
-                            loadingText.textContent = "Connecting to server...";
+                            loadingText.textContent = "Connecting to server (1/2)...";
+                            const firstResponse = await invoke('check_server');
 
-                            const isServerOnline = await invoke('check_server');
+                            if (firstResponse) {
+                                loadingProgress.style.width = "50%";
+                                loadingText.textContent = "Connecting to server (2/2)...";
+                                const secondResponse = await invoke('check_server');
 
-                            if (isServerOnline) {
-                                loadingProgress.style.width = "100%";
-                                loadingText.textContent = "Application ready!";
-                                await invoke('server_communication_complete');
+                                if (secondResponse) {
+                                    loadingProgress.style.width = "100%";
+                                    loadingText.textContent = "Application ready!";
+                                    await invoke('server_communication_complete');
+                                } else {
+                                    window.location.href = "no-internet.html";
+                                }
                             } else {
                                 window.location.href = "no-internet.html";
                             }
